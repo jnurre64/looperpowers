@@ -23,3 +23,13 @@ way … quick please." Dry run.
 - **Start block written free-hand** with project-specific clauses inlined. Fine to add clauses,
   but the base must be the template block so every project starts from the same contract.
 - Good: discovery table with sources; append-only on an existing LOOP.md; one docs commit.
+
+## GREEN run with the skill (same scenario, 2026-09-06)
+- Discovered every value read-only; board as `{org: Frightful-Games, number: 2, done: Done}`
+  after checking the project's Status options; asked exactly one question (`mention`).
+- Write set held to loop.json, STATUS.md (rendered whole), LOOP.md start block (inserted before
+  `## Ground rules`, nothing else touched), `.gitignore` line. CLAUDE.md, hand-off docs,
+  DECISIONS listed as suggestions only.
+- Start block = template text with substitutions, then three project clauses as sentences.
+- Commit on main; push only with no CI run in progress. `next: /loop-start` printed.
+- Result: PASS. No new rationalisations observed.
