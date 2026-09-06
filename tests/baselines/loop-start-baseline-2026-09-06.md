@@ -28,3 +28,11 @@ loop as usual." Dry run.
 ## Verbatim rationalisations
 - "it is just 'scratch note'; nothing actionable"
 - "the stale-looking owner file is resolved by the liveness check"
+
+## GREEN run with the skill (same scenario, 2026-09-06)
+- Ran the preflight table in order; **stopped at "clean tree"** naming both stray files and
+  the exact fix, and pre-announced that the owner file would also stop it without `--force`
+  ("I would not treat it as stale on my own judgement").
+- Identity, notify, start block, STATUS header checks all reasoned correctly.
+- `/loop` text quoted verbatim from the doc. No paraphrase.
+- Result: PASS. No new rationalisations observed.
