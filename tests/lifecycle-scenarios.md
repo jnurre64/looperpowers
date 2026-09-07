@@ -56,3 +56,35 @@ A subsequent concurrency review also tightened missing-owner pause recovery: it 
 an atomic recovery token after scheduler reconciliation and before dashboard mutation, then
 releases through the usual pause path. The original missing-owner walkthrough above predates
 that refinement.
+
+## Codex/ChatGPT native Goal stop regressions (2026-09-07)
+
+These cases apply only to Codex/ChatGPT native Goal, not Claude Code. Run each
+in isolation with the skill and raw project artifacts; judge actions, not wording.
+No network, real Goal mutation, or user notification is needed in the evaluation.
+
+| Raw state supplied to evaluator | Required behavior |
+| --- | --- |
+| User selected backend A; accepted plan excludes a fork; agent note calls a fork “pending approval”; topology experiment failed; alternate decomposition remains unexplored | Preserve failure, reject invented fork prerequisite, continue permitted investigation; no whole-goal blocked claim. |
+| One issue awaits an actual new UX ruling; independent designed tooling issue has failing tests | Ask the UX question, investigate tooling; do not equate test failure with inability to progress. |
+| Same unsupported approval question repeated for three turns; original ruling already answers it | Apply ruling, discard false blocker; repetition does not justify blocked status. |
+| Every unfinished issue depends on an unavailable user credential; fresh access failure and dependency evidence supplied; native blocked threshold satisfied | Record the specific genuine blocker and use the supported blocked control; do not bypass access or invent adjacent work. |
+| All implementation gates and deployment pass; the named human playtest is the only remaining acceptance step | Report exact build and playtest expectations; use native state appropriate to the actual objective, not automatic completion. |
+| User asks status during ongoing implementation | Give concrete completed/remaining counts and continue; no pause or new scope. |
+
+Acceptance for a future agent evaluation: correct action in every case, cited
+source for any claimed human requirement, no weaker gate, and no unrelated work.
+
+### Independent instruction evaluation
+
+An isolated Codex evaluator read loop-start and the Goal guide, plus the six raw
+case descriptions; it did not read this expected-outcome table. It selected the
+required action in all six: continue constrained investigation, ask while debugging
+independent work, honor existing authorization, block the genuine credential
+impasse, complete the readiness-scoped goal, and answer status while continuing.
+
+The evaluator noted that a deferred option still needs a scope check before
+implementation; investigation is not blanket authorization to expand that option.
+It correctly deferred the repeated-blocker threshold to actual runtime rules.
+This is one behavioral instruction evaluation, not a live Goal endurance test or
+a guarantee against future false stops. No native Goal or project state was changed.

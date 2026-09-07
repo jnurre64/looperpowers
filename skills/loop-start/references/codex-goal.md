@@ -80,6 +80,40 @@ preflight, acquire ownership and bind the observed goal before work. Adoption of
 Goal is this explicit recovery step, not an automatic helper decision. If both native tools
 and UI are unavailable, report unsupported; do not start a timer or silently run bounded.
 
+## Verify a proposed stop
+
+The continuation mechanism does not validate the agent's design interpretation.
+Before marking the whole Goal blocked, distinguish three cases:
+
+- **Implementation failure:** diagnose within the approved design. Failing tests,
+  an exhausted identical retry, or a hard problem alone do not require a human.
+- **Dependent issue blocked:** preserve its acceptance gate; continue authorized
+  work whose prerequisites are met, including unresolved engineering investigation.
+- **Whole Goal blocked:** every remaining in-scope path requires an actual human
+  decision or external-state change, supported by current evidence.
+
+Use the existing dashboard for a short stop record, not another tracking system:
+exact requirement; source of the user ruling/constraint; new evidence; and each
+remaining issue's next safe action or concrete blocker. Resolve questions from the
+user's recorded decisions first. Do not promote an assistant proposal, stale handoff,
+optional alternative, or self-authored STATUS entry into an approval prerequisite.
+Do not infer a required design choice merely from an issue being open: inspect the
+accepted deliverable that its dependent work needs.
+
+If a genuine decision affects one path, ask it while continuing independent work.
+Only then apply native repeated-blocker rules when no meaningful authorized action
+remains. Three repetitions of an unsupported question are still unsupported. Never
+weaken tests, bypass dependencies, change engines, or switch to an easier objective
+to avoid a valid stop. A status question is not a pause request.
+
+The essential check belongs in the persistent Goal objective (see the template),
+so it is present during continuation, not only when this skill starts. For an
+existing objective, propose the narrow scope-preserving edit using supported
+controls; editing a template does not update a running Goal or its ownership digest.
+These instructions cannot intercept native status tools or guarantee model compliance.
+The regression scenarios exercise intended decisions; passing helper unit tests is
+not evidence that an agent will make those decisions correctly.
+
 ## Shared work and checkpoints
 
 Follow the project's standard iteration and gates repeatedly toward the selected outcome.
