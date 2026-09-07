@@ -9,9 +9,9 @@ coordinate a GitHub backlog through your project's existing pipeline, gates and 
 | Start or resume its configured loop | `$loop-start` | `/loop-start` |
 | Stop at a clear resume point | `$loop-pause` | `/loop-pause` |
 
-These are chat prompts, not shell commands. Setup saves how the loop runs for each client;
-start uses that choice, and pause handles the current owner. You do not need to remember a
-runtime flag each time.
+These are chat prompts, not shell commands. Codex uses native Goal; Claude uses its existing
+event-driven loop. Both share the same project status, gates and ownership. Start selects the
+client backend automatically; pause follows the actual owner. No runtime flags are needed.
 
 ## Install
 
@@ -34,11 +34,10 @@ skills do not appear. [Official Codex skill discovery](https://learn.chatgpt.com
 ## Everyday use
 
 Open Codex in the **project you want to orchestrate** and run `$loop-setup`. It discovers
-existing settings, establishes how the loop should continue, and saves the project commands
-and default. If continued operation needs a host service, setup explains that prerequisite;
-it does not silently substitute a one-off run or install services.
+existing settings and saves the shared workflow and client commands. Native Goal continues a
+scoped outcome in the Codex session; ordinary setup needs no host service or iteration cap.
 
-Once the configuration is committed and the project is ready, use `$loop-start`. Use
+Once setup is ready, use `$loop-start`. Use
 `$loop-pause` when you want to stop, and `$loop-start` again to resume. Claude uses the same
 three names with `/` instead of `$`.
 
@@ -56,9 +55,14 @@ the current sandbox-pal shell dispatcher still starts Claude workers.
 - Existing `--mode` overrides and `--force` remain advanced controls. Force never bypasses
   verified shutdown of the previous owner.
 
-A continuing loop wakes again automatically: the existing event-driven runtime wakes on
-worker/CI completion, while the Codex supervisor uses a timer. `--once` does neither after
-its single iteration. All three preserve the same project gates and stop rules.
+Codex Goal continues toward the agreed outcome within the session. Claude wakes on worker/CI
+completion with its existing fallback. The optional Codex supervisor uses a host timer;
+`--once` stops after one iteration. All preserve the same project gates and stop rules.
+
+When switching clients, pause the previous owner and verify transfer first. A paused native
+Goal retains ownership until it cannot resume writes. Some Codex surfaces require an explicit
+`/goal pause` or `/goal resume`; the skill reports pending until native state confirms it.
+Existing saved timer/bounded defaults remain unchanged until a reviewed setup migration.
 
 See the [Codex guide](docs/CODEX.md) for setup/migration and runtime details, the
 [supervisor guide](skills/loop-start/references/codex-supervisor.md) for hosting, and the

@@ -5,12 +5,26 @@ real installed SKILL.md path, following symlinks; sibling skills use
 `../loop-start/references/runtime.md`. The package root is two directories above a skill
 folder. Never infer resources from a client's home directory.
 
+## Shared workflow and runtime boundary
+
+Setup → start → pause is the same project lifecycle in either client. New configuration
+uses Claude's existing event loop and Codex's native Goal automatically. Preserve explicit
+legacy defaults until a reviewed setup migration; `--once` and timer hosting are optional.
+Both clients read the same LOOP procedure, STATUS dashboard, gates, dependency evidence and
+ownership record. Changing clients does not reset failure counts or authorize new actions.
+
+For native Goal, read [codex-goal.md](codex-goal.md) and use its lifecycle in place of the
+scheduler-specific checks and publication sequence below. Goal is session continuation,
+not a durable scheduler. All runtimes preserve plan/review/current-head CI/merge/playtest
+gates, scope, notification policy and dependency-safe concurrency. Native controls never
+cancel another session's scheduling or detached workers.
+
 ## Clients and modes
 
 | Client/runtime | Persistent unattended | Explicit bounded iteration |
 |---|---|---|
 | Claude Code with loop, ScheduleWakeup, Monitor, TaskList, TaskStop | Supported after capability preflight | Requires a committed bounded block |
-| Codex ordinary CLI/app turn | Unavailable without a verified scheduler adapter | Supported with `--mode bounded` and a committed bounded block |
+| Codex native Goal | Continues a scoped outcome in the session; see codex-goal.md | Optional `--once` with a bounded block |
 | Codex exec under a host process manager | Explicit supervised timer policy; see codex-supervisor.md | Separate bounded command |
 | Either client with an external scheduler | Only if it satisfies every capability below | Supported with a bounded block |
 
@@ -24,7 +38,7 @@ dispatcher still launches Claude workers.
 Normal use is setup → start → pause. Setup saves `default_modes` per client; bare start
 uses that saved choice. Optional `--once` selects bounded for this invocation without editing
 config; legacy `--mode` remains an explicit override. Without a saved choice, Claude retains
-persistent compatibility and Codex asks for setup. Never infer a default from available start
+persistent compatibility and Codex selects Goal (setup must supply its block). Never infer a default from available start
 blocks or tools. A committed setup choice counts as explicit selection on future starts.
 Never silently downgrade. If required capabilities are missing,
 stop before owner creation, kickoff notification, scheduling, or dispatch. Offer bounded
@@ -33,8 +47,7 @@ mode as `--once`, but require explicit user selection and the corresponding proj
 The default event contract below preserves existing project policy; its completion monitors
 and fallback interval are not general Codex requirements. A saved or explicitly overridden supervised selection uses
 the documented timer contract in [codex-supervisor.md](codex-supervisor.md), after a committed
-project policy change. Native `/goal`, Scheduled, and SDK/exec automation are separate Codex
-facilities, not aliases for our skill commands. Never silently substitute one for another.
+project policy change. Native `/goal` is the ordinary Codex backend; Scheduled and SDK/exec automation remain separate facilities. Never silently substitute one for another.
 
 ## Capability preflight (read-only)
 
@@ -108,8 +121,8 @@ The shared path remains `claude-work/.loop-owner`, ignored by git. New records c
 as authority to cancel tasks. Legacy host/session/started_at records remain blockers.
 
 Use the bundled `scripts/owner.py` for atomic acquire and token-checked release; do not
-truncate/overwrite the file. All clients must use these updated skills. The local owner file
-coordinates one shared checkout, not separate clones or hosts: a scheduler adapter must
+truncate/overwrite the file. All clients must use these updated skills. The helper serializes acquisition across linked worktrees and checks their owner files.
+It cannot coordinate separate clones or hosts: a scheduler adapter must
 provide project-wide exclusion, or all orchestration must use a single shared checkout.
 
 Before every iteration and external mutation, verify the owner token still matches. All

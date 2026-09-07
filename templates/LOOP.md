@@ -10,6 +10,14 @@ procedure; `{{status_file}}` is the dashboard a resuming session reads first.
 - Orchestrator: the selected client/runtime per the lifecycle contract; posts to {{channel}}
   with `{{notify}}`
 
+## Runtime boundary
+
+The project workflow and substantive gates below are shared by both clients. Native Codex
+Goal uses the interactive policy and objective added from CODEX-GOAL.md during setup.
+Scheduler wakeups, timed reminders and the scheduled clean-main/publication lifecycle below
+apply to scheduled runtimes; they are not prerequisites for native Goal. Native Goal preserves
+the user workspace, records the same dashboard and uses confirmed native lifecycle controls.
+
 ## Roles
 
 | Who | Does |
@@ -97,7 +105,7 @@ notification alone; use the verified runtime completion wait, not sleep loops.
 
 Preferred: Claude `/loop-start` or Codex `$loop-start`; setup saves the runtime choice. Start always runs
 capability and ownership preflight. The legacy block below is Claude/persistent only. Codex
-requires a saved `default_modes` choice and committed `start_blocks` mapping in loop.json;
+defaults to native Goal and requires its reviewed `start_blocks` mapping in loop.json;
 never rewrite the legacy block at start time. All client blocks inherit every gate and stop
 rule in this document, including project playtest requirements.
 By hand, in the orchestrator session, after reading `{{status_file}}`:
@@ -125,8 +133,10 @@ Run exactly one attended {{project}} loop iteration per {{loop_doc}} for the cur
 - Definition of done per issue = its Acceptance section + tests green in CI, never weakened.
 - Feel notes outrank spec.
 - The orchestrator records nontrivial design and infra calls in `docs/DECISIONS.md`.
-- `{{status_file}}` is the resume point: updated at every state change, committed straight to
-  `{{default_branch}}`, kept a dashboard (≤ 80 lines, replace never append).
+- `{{status_file}}` is the resume point: updated at every state change and kept a dashboard
+  (≤ 80 lines, replace never append). Scheduled/bounded runtimes commit it straight to
+  `{{default_branch}}`. Native Goal follows the interactive publication policy: preserve the
+  current workspace and disclose local-only status until publication is authorized.
 - Agent branches are cut from `{{default_branch}}` at dispatch time; one that predates a merge
   gets `{{default_branch}}` merged in (keep both DECISIONS entries, `git rm --cached` any
   force-added review ledger). Never force-push an agent branch.

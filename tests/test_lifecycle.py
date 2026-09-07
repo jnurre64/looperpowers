@@ -108,10 +108,10 @@ class ModeSelectionTests(unittest.TestCase):
         self.assertEqual(config['default_modes']['codex'], 'supervised')
         self.assertEqual(preflight.resolve_mode(config, 'codex', 'persistent'), 'persistent')
 
-    def test_legacy_claude_preserved_codex_needs_setup(self):
+    def test_legacy_claude_preserved_codex_defaults_goal(self):
         self.assertEqual(preflight.resolve_mode({}, 'claude'), 'persistent')
-        with self.assertRaisesRegex(ValueError, 'loop-setup'):
-            preflight.resolve_mode({'start_blocks': {'codex': {'bounded': 'Once'}}}, 'codex')
+        self.assertEqual(preflight.resolve_mode(
+            {'start_blocks': {'codex': {'bounded': 'Once'}}}, 'codex'), 'goal')
         self.assertEqual(preflight.resolve_mode({}, 'codex', once=True), 'bounded')
 
     def test_explicitly_saved_one_off_is_respected(self):

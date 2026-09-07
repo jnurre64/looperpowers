@@ -45,30 +45,30 @@ Read-only. Offer each discovered value as the default; ask one question at a tim
 }
 ```
 
-Save the operating choice once so the normal workflow is setup → start → pause. Add
-`default_modes`, keyed by client, alongside `start_blocks` (the exact command headings):
+Save the shared workflow once. For new configuration use the actual client's ordinary
+backend automatically; do not present a runtime menu:
 
 ```json
-"default_modes": {"claude": "persistent", "codex": "supervised"}
+"default_modes": {"claude": "persistent", "codex": "goal"},
+"start_blocks": {
+  "claude": {"persistent": "Starting the loop"},
+  "codex": {"goal": "Starting the loop (Codex Goal)"}
+}
 ```
 
-This is an example after an explicit setup decision, not an automatic default for every
-project. Preserve other clients' defaults, unknown keys and all legacy paths. Discover the
-available runtime and explain the practical behavior in plain language:
+Render `templates/CODEX-GOAL.md` into the project loop document, substituting the discovered
+project/path fields and concrete `{{outcome}}` and `{{human_checkpoint}}`. Infer these from
+the approved plan; ask only if the intended scope/checkpoint is missing. Include its
+Interactive Goal policy and show how it scopes existing scheduler-specific clauses. Read [the Goal guide](../loop-start/references/codex-goal.md).
+Check actual session tools or native `/goal` UI availability; installation/version/config is
+not proof of working lifecycle controls. Record unresolved support honestly. Setup never
+creates a Goal. No timer hosting or arbitrary iteration/token cap is required.
 
-- Continuous event-driven loop (`persistent`): wakes on worker/CI completion, with the
-  project's fallback timer. Preserve the existing Claude behavior and policy.
-- Continuous Codex timer loop (`supervised`): runs through the configured host supervisor.
-  Use it when that host is available and the project explicitly permits timed checks.
-- One iteration only (`bounded`): runs once and stops. Offer as an optional `--once` use case;
-  save it as the default only if the user explicitly wants one-off starts.
-
-Prefer configuring a continuing loop when the user asks for "the loop." Do not present a
-list of internal mode names when discovery identifies the intended runtime. If needed, ask
-one plain-language setup question about continued operation or its hosting. Missing hosting
-is a setup blocker to explain, never a reason to silently save bounded mode. An explicitly
-chosen runtime may be saved with its prerequisite recorded as unresolved; do not claim ready
-until that prerequisite is satisfied. Setup never launches the loop.
+Preserve unknown keys, paths, Claude commands and explicit saved legacy choices. Show the
+migration diff before replacing a saved Codex timer/bounded choice with Goal. User approval
+of that migration is sufficient; do not ask again. When Codex has no saved default it routes
+to Goal, but still needs this project block. Optional `--once` uses a bounded block; timer
+hosting is configured only when requested. Never silently downgrade unavailable Goal.
 
 For Codex supervised operation, read
 [the supervisor guide](../loop-start/references/codex-supervisor.md) and propose additive
@@ -93,7 +93,7 @@ Existing file: never overwrite a key silently — show the diff per key and ask.
 - Present → if no `## Starting the loop` heading, append the template's "Starting the loop"
   section (heading, the fenced `/loop` block, the two closing sentences) before `## Ground
   rules` if that heading exists, else at the end. **Never edit other sections.** Adding a client
-  block to an existing document requires an explicitly selected setup migration, with its diff
+  block (and its runtime policy) to an existing document requires an explicitly selected setup migration, with its diff
   shown before changing the existing config. Project-specific
   clauses may be added inside the fenced block after the template text, each one a sentence.
 
@@ -105,7 +105,11 @@ looks stale; say so.
 ## 5. `.gitignore`, commit, hand-off
 
 - Append `claude-work/.loop-owner` to `.gitignore` if missing.
-- One commit on `default_branch`: `docs: loop setup — loop.json, STATUS.md, LOOP.md start block`.
+- For native Goal setup, preserve the current branch, staged/untracked changes and unpublished
+  commits. Edit only the four scoped artifacts; stage only intended changes if committing is
+  authorized. No clean-main, push or worktree migration is required merely to set up/start.
+  Publish only under the project policy and user authorization; disclose local-only setup.
+- For the legacy scheduled/bounded workflow, one commit on `default_branch`: `docs: loop setup — loop.json, STATUS.md, LOOP.md start block`.
   Push only if the tree was clean before you started and no CI run on `default_branch` is in
   progress; otherwise leave it committed and say so.
 - Print what was written, the saved behavior and any unresolved prerequisites. The normal

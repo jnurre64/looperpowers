@@ -18,6 +18,11 @@ cross-client shutdown, legacy PAUSED reconciliation and failed-notification reco
 
 `cat claude-work/loop.json` (missing → stop: "run /loop-setup first"); read `status_file`.
 
+Inspect the actual owner before choosing a runtime; do not route pause from saved defaults.
+For a `codex-goal` owner (or a native Goal with missing ownership), follow
+[the native Goal pause procedure](../loop-start/references/codex-goal.md) instead of all
+remaining sections below. Unknown/foreign ownership requires reconciliation first.
+
 For an owner whose runtime is `codex-exec`, read
 [the supervisor guide](../loop-start/references/codex-supervisor.md). Request stop using its
 exact token; the running supervisor owns settling, publication, notification and release.

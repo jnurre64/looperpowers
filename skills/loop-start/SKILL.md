@@ -13,7 +13,7 @@ Preflight, then start the loop with the project's own command. **A failed prefli
 before `/loop` with the exact fix; there is no partial start.**
 
 **REQUIRED BACKGROUND:** the project's `docs/LOOP.md` (path from `loop.json`) defines what
-an iteration does and when it stops. This skill only decides whether the loop may start.
+an iteration does and when it stops. This skill routes the shared workflow to the actual client runtime.
 
 Read [the shared runtime contract](references/runtime.md) first. It defines client/mode
 selection, scheduler preflight, verbatim command selection and recovery. Resolve helpers
@@ -30,10 +30,15 @@ Resolve the actual client's saved choice using
 `python3 <skill-dir>/scripts/preflight.py --client <client> --resolve-mode`.
 Pass `--once` or `--mode <mode>` only when the user requested that override. The resolver
 reads `default_modes` from loop.json; legacy Claude projects retain persistent behavior,
-while Codex without a saved choice needs loop-setup. Missing capabilities never change the
+while Codex defaults to native Goal. Both still need their project block. Missing capabilities never change the
 selected mode. A saved setup choice is explicit authorization to select that runtime on
 later starts, not evidence that its scheduler is available. Briefly state whether this start
 continues automatically or runs just once; do not ask the user to reselect it.
+
+When the resolved mode is `goal`, read [the native Goal guide](references/codex-goal.md)
+and follow its start/resume procedure **instead of all remaining sections below**. The
+scheduler report, clean-main, STOPPED-header and publication checks below apply to legacy
+scheduled/bounded workflows, not interactive Goal.
 
 When the resolved mode is `supervised`, read [the Codex supervisor guide](references/codex-supervisor.md).
 Use its run/inspect/stop workflow instead of steps 2–4 below: the executable performs its own

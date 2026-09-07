@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 
-MODES = ('persistent', 'bounded', 'supervised')
+MODES = ('persistent', 'bounded', 'supervised', 'goal')
 
 
 def resolve_mode(config, client, override=None, once=False):
@@ -33,8 +33,8 @@ def resolve_mode(config, client, override=None, once=False):
         if client not in defaults:
             if client == 'claude':
                 return 'persistent'  # Preserve existing Claude projects.
-            raise ValueError('no saved Codex runtime; run loop-setup once, then loop-start needs no flags')
-    if selected not in MODES or (client == 'claude' and selected == 'supervised'):
+            return 'goal'  # Native interactive default; a project block is still required.
+    if selected not in MODES or (client == 'claude' and selected in ('supervised', 'goal')):
         raise ValueError('invalid saved/selected runtime for this client; run loop-setup')
     return selected
 
@@ -93,6 +93,8 @@ def require_stopped(status):
 
 
 def check(config, document, status, client, mode, report, dirty=False):
+    if mode in ('goal', 'supervised'):
+        raise ValueError('use the selected runtime guide, not scheduler preflight')
     if dirty:
         raise ValueError('dirty checkout; commit or remove pending files')
     require_stopped(status)
@@ -125,6 +127,8 @@ def main():
         if args.resolve_mode:
             print(mode)
             return
+        if mode == 'goal':
+            raise ValueError('selected native Goal; follow references/codex-goal.md')
         if mode == 'supervised':
             raise ValueError('selected codex-exec supervisor; use supervisor.py per the runtime guide')
         if args.report is None:

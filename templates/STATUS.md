@@ -6,8 +6,10 @@ the dashboard.
 
 Maintenance contract (binding):
 - The orchestrator updates this file at every event that changes state: a PR merged, a dispatch
-  started, a plan bounced, a stop, a gate posted or passed. Commit straight to `{{default_branch}}`
-  as `docs: STATUS — <what changed>`; no PR.
+  started, a plan bounced, a stop, a gate posted or passed. Scheduled/bounded workflows commit
+  straight to `{{default_branch}}` as `docs: STATUS — <what changed>`; no PR. Native Goal
+  preserves the current workspace and publishes only under project/user authorization;
+  record local-only changes and pending publication explicitly.
 - **A dashboard, not a history.** Superseded lines are *replaced*, never appended. Merged PRs and
   closed issues live in git and GitHub; decisions live in `docs/DECISIONS.md`. Target ≤ 80 lines.
 - Every "awaiting a human" line names exactly what is awaited and where it was posted.
@@ -16,6 +18,8 @@ Maintenance contract (binding):
 ---
 
 ## Last updated: {{date}} — loop STOPPED (not yet started); restart with the configured client/mode command in `{{loop_doc}}`
+
+**Runtime:** none. Native state: not started. Ownership: none. Publication: local setup.
 
 ## Where we are
 

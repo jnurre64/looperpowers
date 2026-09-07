@@ -1,147 +1,112 @@
 # Using looperpowers with Codex
 
-The daily workflow is **`$loop-setup` → `$loop-start` → `$loop-pause`**. Setup is normally
-needed only once per project/client, or when changing how the loop runs. Type these in Codex
-chat, not the terminal. [Install the shared skills first](../README.md#install).
+Use **`$loop-setup` → `$loop-start` → `$loop-pause`** in Codex chat. Claude uses the same
+names with `/`. [Install the shared skills](../README.md#install) in each client.
 
 ## Setup once
 
-Open Codex in the project you want to orchestrate, then send:
+`$loop-setup` discovers the project's settings, procedure, gates and notification path.
+New setups route Codex to native Goal and Claude to the existing event-driven loop. There
+is no runtime menu for ordinary use. Setup asks only for missing project decisions, including
+the outcome and human checkpoint if the existing plan does not establish them.
 
-```text
-$loop-setup
-```
-
-Setup discovers the repo, bot identity, existing project rules, notification path and dispatcher
-settings. It reads AGENTS.md/CLAUDE.md and non-secret config.defaults.env/config.env assignments
-without sourcing files. It preserves existing keys, Claude commands and project gates.
-
-Setup establishes continued operation where available, explains any required host service,
-and saves the choice. If something cannot be discovered, it asks during setup. It does not
-make you choose a runtime every time you start. Missing hosting remains an explicit prerequisite;
-a one-off run is saved as the default only if that is what you ask for.
+Both clients use the same files:
 
 | File | Purpose |
 |---|---|
-| `claude-work/loop.json` | Settings, the saved choice per client and exact command headings |
-| `docs/LOOP.md` | Project procedure, gates, stop cases and client commands |
-| `claude-work/STATUS.md` | Resume dashboard (path can be overridden in config) |
-| `claude-work/.loop-owner` | Ignored ownership record shared by both clients |
+| `claude-work/loop.json` | Shared settings and client command headings |
+| `docs/LOOP.md` | Project procedure, gates, outcomes and client commands |
+| `claude-work/STATUS.md` | Shared progress, in-flight work, next ready work and human asks |
+| `claude-work/.loop-owner` | Ignored current runtime/session ownership |
 
-Keep these compatibility paths when migrating. Review and commit setup before starting.
-Setup does not install a dispatcher, notification script or service, change credentials, or
-start the loop. It may suggest an AGENTS.md pointer but does not edit that file.
+Paths can be configured; existing compatibility paths remain valid. Setup preserves unknown
+keys and existing Claude commands. It does not start a Goal, install a service, or change
+credentials. Native Goal setup/start does not require clean main, a push, a new worktree or an
+arbitrary iteration budget. Existing project rules still govern the actions performed.
 
-## Start and pause
+## Start, pause and switch clients
 
-```text
-$loop-start
-```
+`$loop-start` reads the common resume point and inspects actual native state and ownership.
+It creates a scoped Goal or resumes the matching Goal, then continues toward the agreed
+outcome. Missing design/playtest evidence blocks dependent work; independent designed work
+within scope can continue. All existing plan, review, current-head CI, merge and playtest gates
+remain in force. Goal does not grant additional permissions.
 
-Start loads the saved configuration, checks the clean default branch, remote sync, identity,
-notification path and reconciled ownership, then starts the configured loop. It briefly tells
-you whether that loop continues automatically or runs just once. Missing runtime capabilities
-cause a clear stop; they never silently change how the loop runs.
+`$loop-pause` stops new work, uses the owning runtime's controls and saves the same dashboard.
+It preserves dirty/staged files, unpublished commits and the current branch. Publication
+follows project policy and user authorization; local-only status is disclosed.
 
-```text
-$loop-pause
-```
+Some Codex environments expose creation/inspection tools but no native pause/resume tool.
+The skill then gives the exact `/goal pause` or `/goal resume` command and reports pending
+until native state confirms the transition. If only command UI is available for creation,
+it supplies `/goal <project objective>`. It never claims a Goal started just from preparing
+a command, or treats complete/blocked as a substitute for pause.
 
-Pause uses the current owner's runtime. It stops orchestration, settles only already-gated
-green work, and publishes the resume point. It never dispatches new work or performs a new
-gate. The Codex supervisor stops gracefully: the current iteration can finish before pause
-runs. A stop request is not proof of completed shutdown. Use `$loop-start` again to resume.
+A paused Goal retains ownership because it can resume natively. To switch to Claude or another
+session, verify the old runtime can no longer write, reconcile workers and release its token
+before the next client starts. The skill guides that transfer; deleting the owner file is not
+recovery. Native Goal controls do not stop Claude wakeups, a host supervisor or detached workers.
+Linked worktrees share acquisition exclusion; separate clones/hosts need an external coordinator
+or one orchestration checkout. Update both clients before relying on this protection.
 
-## What did “bounded” mean?
+## Continuation and optional controls
 
-An iteration reads the backlog, reconciles existing work, performs eligible actions, and
-updates status. It may dispatch a worker whose work continues after that iteration ends.
-
-| Behavior | What happens after an iteration? |
+| Runtime | How work continues |
 |---|---|
-| Existing event-driven loop (`persistent`) | Waits for worker/CI completion events, with a fallback timer while machine work runs, then iterates again |
-| Codex timer loop (`supervised`) | The running host supervisor waits the configured interval, then invokes Codex again |
-| One-off run (`bounded`, now exposed as `--once`) | Publishes the resume point and stops; the user must start the next iteration |
+| Codex Goal (ordinary) | Works toward a scoped outcome within the native session |
+| Claude event loop (ordinary) | Wakes on completion events, with the project's fallback timer |
+| Codex supervisor (optional) | A configured host process invokes Codex on a timer |
+| `--once` (optional) | One iteration, then saves the resume point and stops |
 
-The distinction is continuation, not which gates apply. All preserve project plan, merge,
-playtest, dependency, concurrency, spin-guard and human-stop rules. When only a human action
-remains, a continuing loop parks rather than polling indefinitely.
+Goal is not an offline service or a guarantee of future scheduled wakeups. When only human
+work remains, record the exact ask and use supported native checkpoint/stop controls.
+`$loop-start --once` requires its own project block and keeps the saved default unchanged.
+`$loop-pause drain` uses a supported bounded wait only; the supervisor does not support drain.
 
-For one iteration without changing your saved default:
+## Migration and advanced configuration
 
-```text
-$loop-start --once
-```
-
-Setup must have added a one-iteration command first; the [LOOP template](../templates/LOOP.md)
-provides one for Codex. `--once` never strips scheduler instructions from a continuous prompt.
-`$loop-pause drain` requests a bounded CI wait where supported; the Codex supervisor does not
-support drain and uses its ordinary graceful stop instead.
-
-## Existing projects
-
-Run `$loop-setup` once to save your Codex choice. Until then, existing explicit `--mode`
-commands continue to work; bare Codex start asks for setup rather than guessing from blocks.
-Legacy Claude projects keep their existing persistent default without migration.
-
-Before changing clients, pause through the owning session and verify its scheduler is stopped.
-Codex cannot cancel another Claude session's wakeups using local tools. Reconcile PRs, CI,
-dispatcher outcomes and locks. Exit 0 with `outcome=agent:failed` is a failure; absent locks or
-a PAUSED header alone do not prove safety. Complete pause/recovery before normalizing legacy
-PAUSED dashboards to STOPPED. Never take over by deleting an owner record.
-
-## Advanced configuration
-
-Setup manages these settings; ordinary start and pause do not need flags. For example, after
-choosing a Codex timer loop and keeping the existing Claude event loop, merge this fragment
-into the existing loop.json (do not replace the file):
+Existing explicitly saved timer or bounded choices remain intact. Run `$loop-setup` to review
+migration to Goal. Missing Codex defaults select Goal, but a missing Goal project block still
+requires setup. Legacy Claude projects keep their existing command and persistent behavior.
+New configuration includes this additive fragment:
 
 ```json
-"default_modes": {"claude": "persistent", "codex": "supervised"},
+"default_modes": {"claude": "persistent", "codex": "goal"},
 "start_blocks": {
   "claude": {"persistent": "Starting the loop"},
-  "codex": {
-    "supervised": "Starting the loop (Codex supervised)",
-    "supervised_pause": "Stopping the loop (Codex supervised)",
-    "bounded": "Starting the loop (Codex bounded)"
-  }
+  "codex": {"goal": "Starting the loop (Codex Goal)"}
 }
 ```
 
-Each heading must contain its rendered project command in loop_doc. Supervised operation
-also requires committed timer policy and `codex_supervisor` settings; see the
-[supervisor guide](../skills/loop-start/references/codex-supervisor.md) and
-[template](../templates/CODEX-SUPERVISOR.md). It requires an authorized host process manager;
-a chat background process does not establish future liveness. Do not substitute a timer
-when project policy requires completion events without reviewing that policy change.
+Render the [Goal template](../templates/CODEX-GOAL.md) into the project procedure with a
+concrete outcome and checkpoint. Keep the exact objective within 4,000 characters and put
+long policy in referenced project files. Review any existing scheduler-specific publication
+rules when adding the interactive policy; do not weaken substantive gates.
 
-`--mode persistent|bounded|supervised` overrides the saved choice for one invocation;
-`--once` is the clearer alias for `--mode bounded`. Do not combine them. Overrides still need
-the correct committed block and capabilities. Pause always follows the active owner, even
-when start used an override. `--force` retains all verified-transfer requirements.
+Advanced `--mode goal|persistent|bounded|supervised` overrides still need corresponding
+capabilities and project blocks. `--once` and `--mode` are mutually exclusive. `--force`
+requires verified shutdown/transfer; it never means blind takeover. Timer hosting requires
+explicit setup and project timer policy; see the [supervisor guide](../skills/loop-start/references/codex-supervisor.md).
 
-## Troubleshooting
+## Troubleshooting and verification
 
 | Symptom | Next step |
 |---|---|
-| Skills not found | Re-run `install.sh codex`; verify the symlinks and package checkout; restart Codex if needed |
-| No saved Codex runtime | Run `$loop-setup` once to save the intended behavior |
-| Missing block or scheduler | Fix the selected setup/prerequisite; optionally request `--once` if its block exists |
-| Dirty or unsynchronized tree | Reconcile pending changes and branch state; do not discard files to satisfy preflight |
-| Identity/permission mismatch | Check gh identity against bot_user and permissions for the required operations |
-| Foreign owner or stale runtime state | Follow [verified recovery](../skills/loop-start/references/runtime.md); do not infer safety from timestamps |
-| Notification failed | Fix delivery and complete recovery; later failures retain ownership |
+| Skills missing | Re-run install.sh codex, check symlinks and restart the client if needed |
+| Goal block missing | Run setup to add the reviewed project objective |
+| Native controls unavailable | Inspect actual tool/UI support; no silent timer or bounded fallback |
+| Pause/resume pending | Use the supplied native command and confirm via `/goal` |
+| Foreign or inconsistent owner | Reconcile in the owning session; preserve the record |
+| Permissions or publication blocked | Resolve the actual operation; Goal does not alter authorization |
+| Notification failed | Report locally and retain ownership where recovery is unresolved |
 
-## Native Codex options
+See the [native adapter contract](../skills/loop-start/references/codex-goal.md) and
+[shared ownership contract](../skills/loop-start/references/runtime.md).
+Official references: [Follow goals](https://learn.chatgpt.com/use-cases/follow-goals),
+[developer commands](https://learn.chatgpt.com/docs/developer-commands?surface=cli), and
+[long-running work](https://learn.chatgpt.com/docs/long-running-work).
 
-Native `/goal` works toward a defined outcome, and Scheduled provides future follow-ups where
-available. They are separate facilities, not aliases for these three skills. The bundled
-supervisor uses the documented `codex exec` interface. Project ownership and event/fallback
-rules are looperpowers conventions, not a universal Codex standard.
-[Long-running work](https://learn.chatgpt.com/docs/long-running-work),
-[scheduled tasks](https://learn.chatgpt.com/docs/automations),
-[non-interactive mode](https://learn.chatgpt.com/docs/non-interactive-mode).
-
-Offline tests establish helper and supervisor process behavior with fake executables. Live
-model decisions and integrations still need a controlled pilot. The worker engine remains
-independent: the current sandbox-pal shell dispatcher still starts Claude workers.
+Offline tests exercise routing, ownership and supervisor processes with local fakes. They do
+not establish real native lifecycle behavior or model adherence to project gates; those need
+a controlled pilot. The orchestrator backend is independent of the worker engine: the current
+sandbox-pal shell dispatcher still launches Claude workers.
