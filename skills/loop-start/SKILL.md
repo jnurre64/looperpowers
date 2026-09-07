@@ -1,17 +1,21 @@
 ---
 name: loop-start
 description: Use when the user asks to start, restart or resume the orchestrator loop ("resume the loop", "start the loop", "kick the loop off again") in a project that has claude-work/loop.json, or when a session is picking up a paused loop.
-argument-hint: "[--force]"
-user-invocable: true
 ---
 
 # loop-start
+
+Usage: `loop-start [--force] [--mode persistent|bounded]`.
 
 Preflight, then start the loop with the project's own command. **A failed preflight stops
 before `/loop` with the exact fix; there is no partial start.**
 
 **REQUIRED BACKGROUND:** the project's `docs/LOOP.md` (path from `loop.json`) defines what
 an iteration does and when it stops. This skill only decides whether the loop may start.
+
+Read [the shared runtime contract](references/runtime.md) first. It defines client/mode
+selection, scheduler preflight, verbatim command selection and recovery. Resolve helpers
+from this installed skill folder, following symlinks.
 
 ## 1. Load the project data
 
@@ -29,9 +33,17 @@ Then read `status_file`. Both are required; nothing is inferred.
 | Up to date | `git fetch` then `git status -sb` shows neither ahead nor behind | behind → `git pull --ff-only`; ahead/diverged → stop |
 | Identity | `gh api user -q .login` equals `bot_user` | stop: "gh is `<login>`, loop expects `<bot_user>`" |
 | Notify path | `notify` file exists and is executable | stop: "notify script missing" (unset `notify` → note "no notify; posts go to the user only" and continue) |
-| Start block | `loop_doc` has a `## Starting the loop` heading followed by a fenced block | stop: "no start block; run /loop-setup" |
-| STATUS shape | `status_file` header line contains `STOPPED` | not STOPPED → stop: "STATUS says the loop is RUNNING/PAUSED mid-flight; run /loop-pause from the owning session, or edit STATUS if that session is gone" |
-| Single owner | `claude-work/.loop-owner` absent | present → stop and print its host, session, started_at: "another session owns the loop; stop it, or re-run with `--force` to take over". **Only `--force` takes over.** A liveness guess ("probably stale", "timestamps say it stopped") never does |
+| Runtime | Verify the selected client/mode capabilities and reconcile scheduler/dispatch state per the runtime contract | missing or unknown → stop before ownership or notification; bounded mode requires explicit selection |
+| Start block | Select the client/mode heading per the runtime contract; validate its complete fenced block and all project gates | stop: "no start block; run /loop-setup" |
+| STATUS shape | `status_file` header line contains `STOPPED` | not STOPPED → pause/reconcile first; PAUSED is legacy, not proof of an active worker. Never fix only the header |
+| Single owner | Inspect owner AND scheduler state | existing/legacy/unknown state → stop; `--force` requires verified prior-runtime shutdown and reconciliation before token-checked release and atomic acquisition |
+
+After read-only capability inspection, write a temporary JSON report outside the checkout
+using the schema in the runtime contract. Run
+`python3 <skill-dir>/scripts/preflight.py --client <client> --mode <mode> --report <temp-report>`.
+It validates the snapshot and emits the selected block verbatim. Preserve that output without
+shell command substitution (which strips trailing newlines). This supplements every check
+above; it does not perform identity checks or certify an adapter from its own declarations.
 
 ## 3. Situation
 
@@ -41,21 +53,25 @@ iteration acts on it.
 
 ## 4. Start
 
-1. Write `claude-work/.loop-owner`: `host=<hostname>`, `session=<session id or "unknown">`,
-   `started_at=<UTC ISO>`. Never `git add` it.
-2. Post the resume line through `notify`: `▶️ <project> loop resumed · <one-line situation>`.
-   If the post fails, stop and say so — a loop whose stop posts cannot land is the failure mode
-   this check exists for.
-3. Extract the fenced block under `## Starting the loop` in `loop_doc` (the first fenced block
-   after that heading) and invoke the `loop` skill with that text **verbatim** — never a
-   paraphrase, never an edited copy. Editing the command is a doc edit and a commit, not a
-   start-time decision.
+1. After every preflight passes, acquire ownership with
+   `python3 <skill-dir>/scripts/owner.py acquire --client <client> --mode <mode> --session <id> --runtime <runtime>`.
+   Keep its token; never git add the owner. Acquisition failure stops the start.
+2. Post through `notify`: `▶️ <project> loop resumed · <mode> · <one-line situation>`.
+   If it fails, do not schedule or dispatch. Follow verified shutdown and token-checked
+   release in the runtime contract; report the failure locally.
+3. Invoke the selected project block **verbatim** through the verified runtime. Legacy
+   blocks invoke Claude's `loop` skill only. A changed command requires a project doc edit
+   and commit, never a start-time rewrite. Record owned task handles and validate the token
+   before every iteration or external mutation.
+4. Bounded mode performs one iteration, then follows `loop-pause` to publish the dashboard,
+   notify and release ownership. Say explicitly that no future wakeup is armed. Any partial
+   start failure requires stop/inspect; retain ownership if shutdown is uncertain.
 
 ## Rationalisations that mean STOP
 
 | thought | reality |
 |---|---|
 | "the untracked file is just a note, nothing actionable" | It is a dirty tree. Clean it or stop. |
-| "the owner file is probably stale, the timestamps prove it" | Only `--force` takes over. Say what the file says and stop. |
+| "the owner file is probably stale, the timestamps prove it" | `--force` still requires verified shutdown of the old runtime. Say what the file says and stop. |
 | "I'll tweak the /loop text slightly for today" | The block is verbatim. Change the doc, commit, then start. |
 | "notify is down but the loop can run" | Stops that cannot post are the known failure. Fix notify first. |
