@@ -36,7 +36,7 @@ exactly these cases:
    and no dependency-safe work remains: post ONE line naming exactly what is awaited, update
    `{{status_file}}`, then STOP owned scheduling through the verified runtime. **Never schedule polling
    wakeups for a human action** — the stopped loop IS the signal; {{human}} restarts it with
-   `/loop-start` (or the command below) after acting.
+   the configured client/mode start command after acting.
 
 While stopped at a gate, continue with dependency-safe work only (`parallel-safe: yes` issues
 whose dependencies are closed), re-posting a one-line reminder every ~3–4 h. When none
@@ -106,8 +106,11 @@ By hand, in the orchestrator session, after reading `{{status_file}}`:
 /loop Run one {{project}} loop iteration per {{loop_doc}} for the current phase (entry: {{status_file}} "Next ready"; gh as {{bot_user}}; repo {{repo}} on {{default_branch}}). Self-pace: arm a persistent Monitor on agent:* label transitions and one per PR CI run; wake on those; long fallback (20–30 min) while a dispatch runs. Each iteration: sweep orphans, gate plans against the touched files, commit any .github/workflows or .claude edits the pipeline left for a human onto the agent branch, merge green PRs (merge {{default_branch}} in first if the branch predates a merge), mark agent:done + board Done, dispatch the next ready issues (≤2 in flight, disjoint), update {{status_file}}, post one status line with {{notify}}. Stop the loop (ScheduleWakeup stop) only on a {{loop_doc}} stop case, after posting it; on stop case 5 post what is awaited and stop — never schedule idle wakeups for a human step.
 ```
 
-`/loop` without an interval is self-paced: the session schedules its own next wake-up and
-**stops itself** on a stop case. Pause deliberately with `/loop-pause`; resume with `/loop-start`.
+In the verified Claude runtime, `/loop` without an interval is self-paced: the session schedules its own next wake-up and
+**stops itself** on a stop case. Claude pauses with `/loop-pause` and resumes with `/loop-start`.
+Codex uses `$loop-pause` and the explicitly configured `$loop-start --mode bounded` or
+`--mode supervised` command. Supervised mode requires its own committed timer policy and
+iteration/pause sections; it never executes the legacy Claude block.
 
 ## Starting the loop (Codex bounded)
 

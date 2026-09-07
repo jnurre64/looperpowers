@@ -1,13 +1,13 @@
 ---
 name: loop-setup
-description: Use when a project needs the orchestrator-loop documents and config (claude-work/loop.json, the STATUS dashboard, the "Starting the loop" block in docs/LOOP.md), or when /loop-start or /loop-pause report that loop.json is missing.
+description: Use when a project needs the orchestrator-loop documents and config (claude-work/loop.json, the STATUS dashboard, the "Starting the loop" block in docs/LOOP.md), or when loop-start or loop-pause report that loop.json is missing.
 ---
 
 # loop-setup
 
 Give a project exactly the files `loop-pause` and `loop-start` read. Idempotent; safe to re-run.
 **Writes four things and nothing else:** `claude-work/loop.json`, `claude-work/STATUS.md` (if
-absent), `docs/LOOP.md` (template if absent, else missing start sections or an explicitly selected client-block migration), one `.gitignore` line. Other edits you think the project needs (CLAUDE.md pointer,
+absent), `docs/LOOP.md` (template if absent, else missing start sections or an explicitly selected client-block migration), one `.gitignore` line. Other edits you think the project needs (AGENTS.md/CLAUDE.md pointer,
 old hand-off notes, DECISIONS) are **printed as suggestions**, never made.
 
 Read [the shared runtime contract](../loop-start/references/runtime.md). Resolve this loaded
@@ -85,7 +85,10 @@ looks stale; say so.
 - One commit on `default_branch`: `docs: loop setup — loop.json, STATUS.md, LOOP.md start block`.
   Push only if the tree was clean before you started and no CI run on `default_branch` is in
   progress; otherwise leave it committed and say so.
-- Print: what was written, the suggestions you did not make, and `next: /loop-start`.
+- Print what was written and the suggestions you did not make. For Codex, print
+  `next: $loop-start --mode bounded` or `--mode supervised` for the selected mode; for Claude,
+  print `next: /loop-start` (or the explicitly configured alternative). These are chat prompts,
+  not shell commands. Supervised setup also names the separate host-service prerequisite.
 
 ## Rationalisations that mean you left the four-file scope
 

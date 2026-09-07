@@ -1,5 +1,10 @@
 # looperpowers — loop-setup, loop-pause, loop-start — design
 
+> Historical design: this records the original Claude-only behavior. For current usage, see
+> the [README](../../../README.md), [Codex user guide](../../CODEX.md), and
+> [shared runtime contract](../../../skills/loop-start/references/runtime.md). Their client
+> selection and verified ownership recovery supersede the original force-transfer rules.
+
 **Date:** 2026-09-06 · **Status:** approved in brainstorm with Jonny (2026-09-06), written for review
 **Repo:** `jnurre64/looperpowers` · **Installs into:** `~/.claude/skills/` (symlinks)
 **First consumers:** `Frightful-Games/AnomalisticsIdle`, `jnurre64/FingerWizard`

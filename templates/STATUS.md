@@ -15,7 +15,7 @@ Maintenance contract (binding):
 
 ---
 
-## Last updated: {{date}} — loop STOPPED (not yet started); restart with `/loop-start`
+## Last updated: {{date}} — loop STOPPED (not yet started); restart with the configured client/mode command in `{{loop_doc}}`
 
 ## Where we are
 
@@ -39,6 +39,8 @@ Loop: `{{loop_doc}}`. Backlog: <!-- where the issues are filed from, if anywhere
 
 ## Loop conventions (binding, detail in `{{loop_doc}}`)
 
+- Codex uses `$loop-start --mode bounded` or `--mode supervised` as configured; Claude uses
+  `/loop-start`. Skill commands are chat prompts.
 - One loop owner at a time (`claude-work/.loop-owner`). Status posts via `{{notify}}`; posts that
   need {{human}} use `{{mention}}`; routine lines never ping.
 - Dispatch by `repository_dispatch`, never by label (the bot's label events are filtered).
