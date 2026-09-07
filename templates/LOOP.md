@@ -7,14 +7,14 @@ procedure; `{{status_file}}` is the dashboard a resuming session reads first.
 - Repo: `{{repo}}` (default branch `{{default_branch}}`)
 - Board: {{board_url}}
 - Pipeline: {{pipeline}} label state machine on the self-hosted runners
-- Orchestrator: the long-running Claude Code session running `/loop`; posts to {{channel}}
+- Orchestrator: the selected client/runtime per the lifecycle contract; posts to {{channel}}
   with `{{notify}}`
 
 ## Roles
 
 | Who | Does |
 |---|---|
-| Orchestrator (the `/loop` session) | Sweeps, picks the next ready issue, dispatches it, gates plans (substantively — read the touched files), merges green PRs, updates the board, posts status, runs audits and design sessions with {{human}}, handles what the runners cannot. |
+| Orchestrator (the owning session) | Sweeps, picks the next ready issue, dispatches it, gates plans (substantively — read the touched files), merges green PRs, updates the board, posts status, runs audits and design sessions with {{human}}, handles what the runners cannot. |
 | Runners ({{pipeline}}) | Triage → plan → adversarial plan review → implement → post-implementation review → PR, per `agent`-labelled issue. |
 | {{human}} | Design sessions, gate verdicts on their own schedule, feel notes anytime. |
 
@@ -34,7 +34,7 @@ exactly these cases:
    edits outside the repo, secrets.
 5. **Human-gated wait with nothing else to do.** When the only remaining action is a human step
    and no dependency-safe work remains: post ONE line naming exactly what is awaited, update
-   `{{status_file}}`, then STOP the loop (`ScheduleWakeup stop`). **Never schedule polling
+   `{{status_file}}`, then STOP owned scheduling through the verified runtime. **Never schedule polling
    wakeups for a human action** — the stopped loop IS the signal; {{human}} restarts it with
    `/loop-start` (or the command below) after acting.
 
@@ -89,11 +89,17 @@ is running (`gh run list --limit 3` first).
 
 A `killed` or `failed` task notification about a wait or a dispatch is **unverified until
 checked** (`gh run view <id>`, `gh issue view <n> --json labels`, `git log origin/<branch>`).
-Never report work lost on a notification alone; wait with the Monitor tool, not sleep loops.
+Read dispatcher semantic `outcome` even if exit code is 0: `agent:failed` is failure.
+Reconcile locks and runner state before calling work active. Never report work lost on a
+notification alone; use the verified runtime completion wait, not sleep loops.
 
 ## Starting the loop
 
-Preferred: `/loop-start` (the looperpowers skill runs the preflight and pastes the block below).
+Preferred: Claude `/loop-start` or Codex `$loop-start --mode bounded`. Start always runs
+capability and ownership preflight. The legacy block below is Claude/persistent only. Codex
+requires an explicitly selected mode and a committed `start_blocks` mapping in loop.json;
+never rewrite the legacy block at start time. All client blocks inherit every gate and stop
+rule in this document, including project playtest requirements.
 By hand, in the orchestrator session, after reading `{{status_file}}`:
 
 ```
@@ -102,6 +108,14 @@ By hand, in the orchestrator session, after reading `{{status_file}}`:
 
 `/loop` without an interval is self-paced: the session schedules its own next wake-up and
 **stops itself** on a stop case. Pause deliberately with `/loop-pause`; resume with `/loop-start`.
+
+## Starting the loop (Codex bounded)
+
+Select this only through `start_blocks.codex.bounded` in loop.json and explicit bounded mode.
+
+```text
+Run exactly one attended {{project}} loop iteration per {{loop_doc}} for the current phase (entry: {{status_file}} "Next ready"; gh as {{bot_user}}; repo {{repo}} on {{default_branch}}). Preserve all plan, merge and playtest gates, readiness bars, spin guard, concurrency, dependency rules and notification checks in {{loop_doc}}. Perform immediately available work only; never wait or schedule another iteration. Inspect dispatcher semantic outcomes and locks before dispatching. When only a human action remains, post once naming what is awaited and stop without polling. At the end, use loop-pause to stop owned machinery, record PRs and workers still in flight in {{status_file}}, publish status, notify with {{notify}}, and release verified ownership. State that no future wakeup is armed.
+```
 
 ## Ground rules
 
