@@ -18,6 +18,14 @@ cross-client shutdown, legacy PAUSED reconciliation and failed-notification reco
 
 `cat claude-work/loop.json` (missing → stop: "run /loop-setup first"); read `status_file`.
 
+For an owner whose runtime is `codex-exec`, read
+[the supervisor guide](../loop-start/references/codex-supervisor.md). Request stop using its
+exact token; the running supervisor owns settling, publication, notification and release.
+Do not concurrently run steps 2–5 here. A stop request is graceful and not proof of shutdown:
+report stopping until inspect shows no lock holder, stopped state and released ownership.
+If interrupted/failed, reconcile and use explicit recovery; never infer success from a free
+lock. `drain` is unavailable in this runtime; say so and request the ordinary graceful stop.
+
 ## 1. Stop the machinery FIRST
 
 1. Identify the owner token, client, runtime and recorded handles. Inspect scheduler state

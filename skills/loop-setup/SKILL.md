@@ -52,6 +52,13 @@ a separate committed heading and verbatim one-iteration command that preserves e
 gate. Never translate or replace an existing Claude block. Existing project policy that
 requires Claude tools needs an explicit reviewed doc migration before Codex start.
 
+For explicitly selected supervised mode, read
+[the supervisor guide](../loop-start/references/codex-supervisor.md), propose additive
+`codex_supervisor`/`start_blocks` config and the two sections from
+`templates/CODEX-SUPERVISOR.md`. Review timer-policy compatibility before committing. Do not
+install services, change authentication or launch the loop as part of setup. Explain that
+host process management is separate and a controlled pilot is still needed.
+
 Existing file: never overwrite a key silently — show the diff per key and ask. Validate with
 `jq .` before committing.
 

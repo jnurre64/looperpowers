@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import json
+import os
+from pathlib import Path
+import sys
+import subprocess
+import time
+root = Path(os.environ['FAKE_RUNTIME'])
+with (root / 'notifications.jsonl').open('a') as stream:
+    stream.write(json.dumps(sys.argv[1:]) + '\n')
+scenario = json.loads((root / 'scenario.json').read_text())
+if scenario.get('notify_timeout'):
+    subprocess.Popen([sys.executable, '-c', "import time; from pathlib import Path; time.sleep(2); Path('" + str(root / 'survived-notify') + "').touch()"])
+    time.sleep(5)
+if scenario.get('notify_failure') == ('start' if 'resumed' in sys.argv[1] else 'pause'):
+    sys.exit(1)

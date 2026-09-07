@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""Offline Codex process fixture. Never contacts Codex, GitHub or a dispatcher."""
+import json
+import os
+from pathlib import Path
+import sys
+import time
+
+if '--help' in sys.argv:
+    print('--sandbox --json --output-schema --output-last-message')
+    sys.exit(0)
+root = Path(os.environ['FAKE_RUNTIME'])
+phase = os.environ['LOOPER_PHASE']
+prompt = sys.stdin.buffer.read().decode()
+with (root / 'trace.jsonl').open('a') as trace:
+    trace.write(json.dumps({'phase': phase, 'prompt': prompt, 'args': sys.argv[1:],
+                            'token': os.environ['LOOPER_OWNER_TOKEN']}) + '\n')
+scenario = json.loads((root / 'scenario.json').read_text())
+if phase == 'iteration':
+    time.sleep(scenario.get('sleep', 0))
+if scenario.get('replace_owner') and phase == 'iteration':
+    Path('claude-work/.loop-owner').write_text('{"token":"foreign"}')
+if scenario.get('policy_change') and phase == 'iteration':
+    Path('LOOP.md').write_text('new policy')
+if scenario.get('bad_pause') and phase == 'pause':
+    Path('STATUS.md').write_text('# loop RUNNING\n')
+if scenario.get('dirty') and phase == 'iteration':
+    Path('unexpected.txt').write_text('unfinished work')
+if scenario.get('crash') and phase == 'iteration':
+    sys.exit(4)
+if scenario.get('event_error') and phase == 'iteration':
+    print(json.dumps({'type': 'turn.failed'}))
+else:
+    print(json.dumps({'type': 'turn.completed'}))
+result = {'decision': scenario.get('decision', 'human') if phase == 'iteration' else 'stopped',
+          'summary': 'fixture complete', 'work_in_flight': scenario.get('work_in_flight', False)}
+output = Path(sys.argv[sys.argv.index('-o') + 1])
+output.write_text('not json' if scenario.get('malformed') else json.dumps(result))

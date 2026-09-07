@@ -5,7 +5,7 @@ description: Use when the user asks to start, restart or resume the orchestrator
 
 # loop-start
 
-Usage: `loop-start [--force] [--mode persistent|bounded]`.
+Usage: `loop-start [--force] [--mode persistent|bounded|supervised]`.
 
 Preflight, then start the loop with the project's own command. **A failed preflight stops
 before `/loop` with the exact fix; there is no partial start.**
@@ -23,6 +23,14 @@ from this installed skill folder, following symlinks.
 cat claude-work/loop.json            # missing → stop: "run /loop-setup first"
 ```
 Then read `status_file`. Both are required; nothing is inferred.
+
+For explicitly selected `supervised` mode, read [the Codex supervisor guide](references/codex-supervisor.md).
+Use its run/inspect/stop workflow instead of steps 2–4 below: the executable performs its own
+preflight, acquisition and lifecycle notifications. Do not pre-acquire an owner or wrap its
+iteration in another loop. Review project timer policy and fresh external-runtime/worker
+reconciliation first; then launch via the user's selected host process manager. A chat's
+background process is not verified durable hosting. Never install/start a service merely
+because this skill was installed.
 
 ## 2. Preflight — every line is a hard stop with its fix
 

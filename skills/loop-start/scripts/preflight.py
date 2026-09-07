@@ -56,15 +56,19 @@ def select_block(config, document, client, mode):
     return sections[0][0]
 
 
-def check(config, document, status, client, mode, report, dirty=False):
-    if dirty:
-        raise ValueError('dirty checkout; commit or remove pending files')
+def require_stopped(status):
     headers = [line for line in status.splitlines() if re.match(r'^## Last updated:', line)]
     if len(headers) > 1:
         raise ValueError('ambiguous dashboard state')
     header = headers[0] if headers else next((line for line in status.splitlines() if line.strip()), '')
     if not re.search(r'\bSTOPPED\b', header) or re.search(r'\b(RUNNING|PAUSED)\b', header):
         raise ValueError('dashboard requires pause/reconciliation; do not edit only the header')
+
+
+def check(config, document, status, client, mode, report, dirty=False):
+    if dirty:
+        raise ValueError('dirty checkout; commit or remove pending files')
+    require_stopped(status)
     if report.get('client') != client or report.get('mode') != mode:
         raise ValueError('runtime report does not match selected client/mode')
     capabilities = report.get('capabilities', {})

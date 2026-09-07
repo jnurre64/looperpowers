@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+# Only identity lookup is available; all other calls fail.
+import sys
+if sys.argv[1:] != ['api', 'user', '-q', '.login']:
+    sys.exit('unexpected fake GitHub call')
+print('test-bot')

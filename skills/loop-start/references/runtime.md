@@ -11,17 +11,25 @@ folder. Never infer resources from a client's home directory.
 |---|---|---|
 | Claude Code with loop, ScheduleWakeup, Monitor, TaskList, TaskStop | Supported after capability preflight | Requires a committed bounded block |
 | Codex ordinary CLI/app turn | Unavailable without a verified scheduler adapter | Supported with `--mode bounded` and a committed bounded block |
+| Codex exec under a host process manager | Explicit supervised timer policy; see codex-supervisor.md | Separate bounded command |
 | Either client with an external scheduler | Only if it satisfies every capability below | Supported with a bounded block |
 
 A normal turn, background shell process, sleep, or in-turn wait does not establish that the
 client will wake later. This package supplies instructions and ownership helpers, not a
-durable scheduler. App automations are not automatically a compatible adapter. The
+durable host service. The bundled [Codex exec supervisor](codex-supervisor.md) supplies
+serialized timed invocations while its host process is running. App automations are not automatically a compatible adapter. The
 orchestrator client does not change the worker engine: the current sandbox-pal shell
 dispatcher still launches Claude workers.
 
 Default mode is `persistent`. Never silently downgrade. If required capabilities are missing,
 stop before owner creation, kickoff notification, scheduling, or dispatch. Offer bounded
 mode, but require explicit user selection and the corresponding project command first.
+
+The default event contract below preserves existing project policy; its completion monitors
+and fallback interval are not general Codex requirements. Explicit `--mode supervised` uses
+the documented timer contract in [codex-supervisor.md](codex-supervisor.md), after a committed
+project policy change. Native `/goal`, Scheduled, and SDK/exec automation are separate Codex
+facilities, not aliases for our skill commands. Never silently substitute one for another.
 
 ## Capability preflight (read-only)
 
