@@ -77,6 +77,15 @@ For Codex supervised operation, read
 command, use the bounded block in templates/LOOP.md. Never replace the existing Claude
 block or weaken any gate. Do not install services or change authentication during setup.
 
+For **Codex/ChatGPT native Goal only**, retain the Goal template’s evidence-before-blocking clause inside
+the fenced objective. Link the project's existing accepted design/decision sources
+in project-specific sentences; do not create a new design interview or duplicate
+ledger. Identify explicit feasibility dependencies separately from missing user
+choices. A plan may specify an experiment whose outcome is not yet known.
+Updating installed templates does not migrate an existing project block or native
+objective: show the narrow migration and use supported controls when authorized.
+This addition does not change Claude Code setup, commands, stop rules or runtime.
+
 Validate that every saved default has a corresponding project command; supervised also
 requires its pause block. Show the selected behavior and any unresolved host prerequisites
 in the setup diff. Existing projects can keep using their explicit mode flags until setup
