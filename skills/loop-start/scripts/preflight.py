@@ -12,6 +12,33 @@ import subprocess
 import sys
 
 
+MODES = ('persistent', 'bounded', 'supervised')
+
+
+def resolve_mode(config, client, override=None, once=False):
+    """Resolve a saved setup choice, never infer a downgrade from available tools."""
+    if client not in ('claude', 'codex'):
+        raise ValueError('unknown client')
+    if once and override is not None:
+        raise ValueError('--once and --mode are mutually exclusive')
+    if once:
+        return 'bounded'
+    if override is not None:
+        selected = override
+    else:
+        defaults = config.get('default_modes', {})
+        if not isinstance(defaults, dict):
+            raise ValueError('default_modes must map clients to modes; run loop-setup')
+        selected = defaults.get(client)
+        if client not in defaults:
+            if client == 'claude':
+                return 'persistent'  # Preserve existing Claude projects.
+            raise ValueError('no saved Codex runtime; run loop-setup once, then loop-start needs no flags')
+    if selected not in MODES or (client == 'claude' and selected == 'supervised'):
+        raise ValueError('invalid saved/selected runtime for this client; run loop-setup')
+    return selected
+
+
 def select_block(config, document, client, mode):
     mapping = config.get('start_blocks')
     if mapping is None:
@@ -86,17 +113,28 @@ def check(config, document, status, client, mode, report, dirty=False):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--client', choices=['claude', 'codex'], required=True)
-    parser.add_argument('--mode', choices=['persistent', 'bounded'], default='persistent')
-    parser.add_argument('--report', type=Path, required=True)
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument('--mode', choices=MODES)
+    selection.add_argument('--once', action='store_true')
+    parser.add_argument('--resolve-mode', action='store_true', help='print selected runtime without starting it')
+    parser.add_argument('--report', type=Path)
     args = parser.parse_args()
     try:
         config = json.loads(Path('claude-work/loop.json').read_text())
+        mode = resolve_mode(config, args.client, args.mode, args.once)
+        if args.resolve_mode:
+            print(mode)
+            return
+        if mode == 'supervised':
+            raise ValueError('selected codex-exec supervisor; use supervisor.py per the runtime guide')
+        if args.report is None:
+            raise ValueError('--report is required for capability preflight')
         dirty = subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip()
         # Files are opened without universal newline conversion for verbatim output.
         with Path(config['loop_doc']).open(newline='') as stream:
             document = stream.read()
         command = check(config, document, Path(config['status_file']).read_text(),
-                        args.client, args.mode, json.loads(args.report.read_text()), bool(dirty))
+                        args.client, mode, json.loads(args.report.read_text()), bool(dirty))
         sys.stdout.write(command)
     except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
         parser.exit(1, f'Preflight blocked: {error}\n')

@@ -39,8 +39,8 @@ Loop: `{{loop_doc}}`. Backlog: <!-- where the issues are filed from, if anywhere
 
 ## Loop conventions (binding, detail in `{{loop_doc}}`)
 
-- Codex uses `$loop-start --mode bounded` or `--mode supervised` as configured; Claude uses
-  `/loop-start`. Skill commands are chat prompts.
+- Codex uses `$loop-start`; Claude uses `/loop-start`. Setup saves the runtime choice.
+  Optional `--once` runs one iteration. Skill commands are chat prompts.
 - One loop owner at a time (`claude-work/.loop-owner`). Status posts via `{{notify}}`; posts that
   need {{human}} use `{{mention}}`; routine lines never ping.
 - Dispatch by `repository_dispatch`, never by label (the bot's label events are filtered).

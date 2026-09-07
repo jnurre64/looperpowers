@@ -5,7 +5,9 @@ description: Use when the user asks to start, restart or resume the orchestrator
 
 # loop-start
 
-Usage: `loop-start [--force] [--mode persistent|bounded|supervised]`.
+Normal use: `$loop-start` in Codex or `/loop-start` in Claude. Start the runtime saved by
+setup; do not make the user choose from a mode menu on every start. Optional `--once` runs
+one iteration and stops. Existing `--mode` overrides and `--force` remain advanced options.
 
 Preflight, then start the loop with the project's own command. **A failed preflight stops
 before `/loop` with the exact fix; there is no partial start.**
@@ -24,7 +26,16 @@ cat claude-work/loop.json            # missing → stop: "run /loop-setup first"
 ```
 Then read `status_file`. Both are required; nothing is inferred.
 
-For explicitly selected `supervised` mode, read [the Codex supervisor guide](references/codex-supervisor.md).
+Resolve the actual client's saved choice using
+`python3 <skill-dir>/scripts/preflight.py --client <client> --resolve-mode`.
+Pass `--once` or `--mode <mode>` only when the user requested that override. The resolver
+reads `default_modes` from loop.json; legacy Claude projects retain persistent behavior,
+while Codex without a saved choice needs loop-setup. Missing capabilities never change the
+selected mode. A saved setup choice is explicit authorization to select that runtime on
+later starts, not evidence that its scheduler is available. Briefly state whether this start
+continues automatically or runs just once; do not ask the user to reselect it.
+
+When the resolved mode is `supervised`, read [the Codex supervisor guide](references/codex-supervisor.md).
 Use its run/inspect/stop workflow instead of steps 2–4 below: the executable performs its own
 preflight, acquisition and lifecycle notifications. Do not pre-acquire an owner or wrap its
 iteration in another loop. Review project timer policy and fresh external-runtime/worker

@@ -21,12 +21,17 @@ serialized timed invocations while its host process is running. App automations 
 orchestrator client does not change the worker engine: the current sandbox-pal shell
 dispatcher still launches Claude workers.
 
-Default mode is `persistent`. Never silently downgrade. If required capabilities are missing,
+Normal use is setup → start → pause. Setup saves `default_modes` per client; bare start
+uses that saved choice. Optional `--once` selects bounded for this invocation without editing
+config; legacy `--mode` remains an explicit override. Without a saved choice, Claude retains
+persistent compatibility and Codex asks for setup. Never infer a default from available start
+blocks or tools. A committed setup choice counts as explicit selection on future starts.
+Never silently downgrade. If required capabilities are missing,
 stop before owner creation, kickoff notification, scheduling, or dispatch. Offer bounded
-mode, but require explicit user selection and the corresponding project command first.
+mode as `--once`, but require explicit user selection and the corresponding project command first.
 
 The default event contract below preserves existing project policy; its completion monitors
-and fallback interval are not general Codex requirements. Explicit `--mode supervised` uses
+and fallback interval are not general Codex requirements. A saved or explicitly overridden supervised selection uses
 the documented timer contract in [codex-supervisor.md](codex-supervisor.md), after a committed
 project policy change. Native `/goal`, Scheduled, and SDK/exec automation are separate Codex
 facilities, not aliases for our skill commands. Never silently substitute one for another.
@@ -86,7 +91,7 @@ Optional additive configuration selects exact level-two headings in the same loo
 }
 ```
 
-Select by the actual client and explicitly selected mode. Extract the first complete fenced
+Select by the actual client and resolved saved/overridden mode. Extract the first complete fenced
 block within that heading, before the next heading of level two or higher. Missing, duplicate,
 or unclosed blocks fail preflight. Pass the contents verbatim to the supported runtime;
 never paraphrase, strip tool names, or translate on the fly. Adding an alternative is a

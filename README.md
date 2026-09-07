@@ -1,20 +1,17 @@
 # looperpowers
 
-Three shared lifecycle skills for Claude Code and Codex. They coordinate a GitHub backlog
-through your project's existing pipeline, gates, and notification path.
+Three shared lifecycle skills for Claude Code and Codex: **setup, start, pause**. They
+coordinate a GitHub backlog through your project's existing pipeline, gates and notifications.
 
-| Task | Codex prompt | Claude Code prompt |
+| Task | Codex | Claude Code |
 |---|---|---|
-| Create or migrate project loop documents | `$loop-setup` | `/loop-setup` |
-| Run one attended iteration | `$loop-start --mode bounded` | `/loop-start --mode bounded` |
-| Run the Codex timer supervisor | `$loop-start --mode supervised` | Not a Claude runtime |
-| Start the existing event-driven loop | Requires a verified compatible adapter | `/loop-start` |
-| Pause the selected runtime | `$loop-pause` | `/loop-pause` |
+| Configure the project once | `$loop-setup` | `/loop-setup` |
+| Start or resume its configured loop | `$loop-start` | `/loop-start` |
+| Stop at a clear resume point | `$loop-pause` | `/loop-pause` |
 
-Type skill prompts in the client chat, not your shell. Each mode needs its own committed
-project command. The template provides Claude/persistent and Codex/bounded commands;
-Claude/bounded requires a project-owned block. Starting without a mode retains the historical
-`persistent` default; Codex never silently falls back to bounded mode.
+These are chat prompts, not shell commands. Setup saves how the loop runs for each client;
+start uses that choice, and pause handles the current owner. You do not need to remember a
+runtime flag each time.
 
 ## Install
 
@@ -24,90 +21,56 @@ Run in a terminal:
 git clone https://github.com/jnurre64/looperpowers.git ~/repos/looperpowers
 ~/repos/looperpowers/install.sh codex   # ~/.agents/skills
 # Other choices:
-~/repos/looperpowers/install.sh claude  # ~/.claude/skills; also the no-argument default
+~/repos/looperpowers/install.sh claude  # ~/.claude/skills; no-argument default
 ~/repos/looperpowers/install.sh all     # both clients, same source skills
 ```
 
-The scripts require Bash, Python 3 and a POSIX environment; supervisor tests run on Linux.
-Project operations use Git and `gh`, plus the configured pipeline and notification script.
-The supervisor also needs Codex CLI on its host. Native Windows execution is not supported
-by the POSIX ownership helper; use an appropriate Linux environment for that runtime.
+Use a POSIX environment with Bash, Python 3, Git and `gh`; tests run on Linux. The ownership
+helper does not support native Windows. The Codex supervisor also needs Codex CLI on its host.
+`CODEX_SKILLS_DIR` and `CLAUDE_SKILLS_DIR` override installation destinations. Keep the package
+checkout: installation uses symlinks. Re-run after pulling updates; restart the client if the
+skills do not appear. [Official Codex skill discovery](https://learn.chatgpt.com/docs/build-skills).
 
-`CODEX_SKILLS_DIR` and `CLAUDE_SKILLS_DIR` override their respective destinations. Keep this
-checkout: installed skills are symlinks, and templates/references resolve through it. Existing
-unrelated files or links are preserved. Re-run the installer after pulling updates; restart
-the client if the skills do not appear. Codex supports `.agents/skills` discovery and symlinked
-skills ([official skill documentation](https://learn.chatgpt.com/docs/build-skills)).
+## Everyday use
 
-## First run with Codex
+Open Codex in the **project you want to orchestrate** and run `$loop-setup`. It discovers
+existing settings, establishes how the loop should continue, and saves the project commands
+and default. If continued operation needs a host service, setup explains that prerequisite;
+it does not silently substitute a one-off run or install services.
 
-Open Codex in the **project you want to orchestrate**, then send:
+Once the configuration is committed and the project is ready, use `$loop-start`. Use
+`$loop-pause` when you want to stop, and `$loop-start` again to resume. Claude uses the same
+three names with `/` instead of `$`.
 
-```text
-$loop-setup Configure this project for Codex bounded mode. Preserve existing Claude commands and all project gates.
-```
+The shared configuration remains `claude-work/loop.json`, with the procedure in `docs/LOOP.md`
+and resume dashboard in `claude-work/STATUS.md`. Those compatibility paths serve both clients.
+Setup does not install the worker pipeline or notification script. Codex orchestration of
+the current sandbox-pal shell dispatcher still starts Claude workers.
 
-Review the discovered settings and generated documents. Setup creates or updates
-`claude-work/loop.json`, `docs/LOOP.md`, the STATUS dashboard and the owner-file ignore rule.
-The `claude-work` name is retained for compatibility in both clients. Setup does not install
-the worker pipeline, create a notification script, or start the loop.
+## Optional controls
 
-Once setup is committed and the checkout is clean and ready, send:
+- `$loop-start --once`: run one iteration and stop. This is the old `bounded` mode, useful
+  for a manual run or pilot. It needs a configured one-iteration block and does not change
+  the saved default or schedule a future wakeup.
+- `$loop-pause drain`: wait briefly for eligible in-flight CI where the runtime supports it.
+- Existing `--mode` overrides and `--force` remain advanced controls. Force never bypasses
+  verified shutdown of the previous owner.
 
-```text
-$loop-start --mode bounded
-```
+A continuing loop wakes again automatically: the existing event-driven runtime wakes on
+worker/CI completion, while the Codex supervisor uses a timer. `--once` does neither after
+its single iteration. All three preserve the same project gates and stop rules.
 
-This runs one attended iteration and records the resume point. It does not arm a future
-wakeup. Use `$loop-pause` to pause; `drain` is available only when the selected runtime can
-perform a bounded completion wait.
+See the [Codex guide](docs/CODEX.md) for setup/migration and runtime details, the
+[supervisor guide](skills/loop-start/references/codex-supervisor.md) for hosting, and the
+[shared contract](skills/loop-start/references/runtime.md) for ownership and recovery.
 
-For existing projects, mode configuration, supervised execution and troubleshooting, read
-[the Codex user guide](docs/CODEX.md).
-
-## Choose how work continues
-
-| Runtime | What continues the work |
-|---|---|
-| Bounded skill invocation | The user starts the next iteration |
-| Codex exec supervisor | A running host service invokes Codex at the committed interval |
-| Claude event-driven loop | Verified loop/scheduler/monitor tools |
-| Native Codex `/goal` | Interactive work toward a defined completion condition |
-| Native Scheduled tasks | The product's configured scheduled-task facility |
-
-Native `/goal` and Scheduled are separate from our lifecycle commands
-([long-running work](https://learn.chatgpt.com/docs/long-running-work),
-[scheduled tasks](https://learn.chatgpt.com/docs/automations)). A skill installation or ordinary
-chat turn does not establish future liveness. Owner records, exact start blocks, and the
-legacy event/fallback contract are project conventions, not a universal Codex standard.
-
-The [supervisor guide](skills/loop-start/references/codex-supervisor.md) covers explicit timer
-policy, host process management, structured results and graceful stopping. No service is
-installed automatically. Project gates remain binding. Changing the orchestrator to Codex
-does not change the worker engine: sandbox-pal's current shell dispatcher still launches
-Claude workers.
-
-## Ownership and recovery
-
-All clients share `claude-work/.loop-owner`. `--force` never bypasses verified shutdown of
-the prior runtime. A STOPPED/PAUSED dashboard or absent worker locks cannot prove another
-client's wakeups are cancelled. Upgrade all clients using a project together; independent
-clones require coordination beyond a checkout-local owner file.
-
-See the [shared runtime contract](skills/loop-start/references/runtime.md) for capability
-checks, exact command selection, failed notifications, legacy PAUSED migration, and recovery.
-
-## Development and validation
+## Development
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-Tests use temporary local Git repositories and fake Codex/GitHub/notification executables.
-They cover helpers and supervisor process behavior, including timeouts, owner conflicts,
-graceful stops and crash retention. They do not contact live services. Validate actual
-Codex access, project prompts and service hosting in a controlled pilot before unattended use.
-
-The [original design](docs/superpowers/specs/2026-09-06-loop-skills-design.md) and baseline
-transcripts under `tests/baselines/` are historical. Current user guidance and the shared
-runtime contract supersede their Claude-only lifecycle and blind force-transfer behavior.
+Tests use local temporary repositories and fake Codex/GitHub/notifications. Validate actual
+project prompts and hosting in a controlled pilot before unattended use. The
+[original design](docs/superpowers/specs/2026-09-06-loop-skills-design.md) and baseline
+transcripts are historical; current guidance supersedes their Claude-only behavior.

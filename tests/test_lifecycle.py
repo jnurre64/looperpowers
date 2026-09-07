@@ -96,6 +96,62 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(self.check(document=doc), '## Codex\r\n```\r\n')
 
 
+class ModeSelectionTests(unittest.TestCase):
+    def test_plain_start_uses_setup_choice_per_client(self):
+        config = {'default_modes': {'codex': 'supervised', 'claude': 'persistent'}}
+        self.assertEqual(preflight.resolve_mode(config, 'codex'), 'supervised')
+        self.assertEqual(preflight.resolve_mode(config, 'claude'), 'persistent')
+
+    def test_once_overrides_without_changing_saved_choice(self):
+        config = {'default_modes': {'codex': 'supervised'}}
+        self.assertEqual(preflight.resolve_mode(config, 'codex', once=True), 'bounded')
+        self.assertEqual(config['default_modes']['codex'], 'supervised')
+        self.assertEqual(preflight.resolve_mode(config, 'codex', 'persistent'), 'persistent')
+
+    def test_legacy_claude_preserved_codex_needs_setup(self):
+        self.assertEqual(preflight.resolve_mode({}, 'claude'), 'persistent')
+        with self.assertRaisesRegex(ValueError, 'loop-setup'):
+            preflight.resolve_mode({'start_blocks': {'codex': {'bounded': 'Once'}}}, 'codex')
+        self.assertEqual(preflight.resolve_mode({}, 'codex', once=True), 'bounded')
+
+    def test_explicitly_saved_one_off_is_respected(self):
+        self.assertEqual(preflight.resolve_mode({'default_modes': {'codex': 'bounded'}}, 'codex'), 'bounded')
+
+    def test_invalid_configuration_and_conflicting_flags_fail(self):
+        for config in [{'default_modes': None}, {'default_modes': {'codex': None}},
+                       {'default_modes': {'codex': 'typo'}}]:
+            with self.subTest(config=config), self.assertRaises(ValueError):
+                preflight.resolve_mode(config, 'codex')
+        with self.assertRaises(ValueError):
+            preflight.resolve_mode({}, 'codex', 'persistent', once=True)
+        with self.assertRaises(ValueError):
+            preflight.resolve_mode({'default_modes': {'claude': 'supervised'}}, 'claude')
+
+    def test_selected_event_runtime_still_requires_scheduler(self):
+        config = {'default_modes': {'codex': 'persistent'},
+                  'start_blocks': {'codex': {'persistent': 'Run'}}}
+        mode = preflight.resolve_mode(config, 'codex')
+        report = FakeScheduler().report
+        report['mode'] = mode
+        with self.assertRaisesRegex(ValueError, 'schedule'):
+            preflight.check(config, '## Run\n```\nrun\n```\n', '# STOPPED', 'codex', mode, report)
+
+    def test_cli_resolves_saved_choice_without_starting_work(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'claude-work').mkdir()
+            config = root / 'claude-work/loop.json'
+            config.write_text('{"default_modes":{"codex":"supervised"}}')
+            args = ['python3', str(ROOT / 'skills/loop-start/scripts/preflight.py'),
+                    '--client', 'codex', '--resolve-mode']
+            result = subprocess.run(args, cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, 'supervised\n')
+            self.assertFalse((root / 'claude-work/.loop-owner').exists())
+            result = subprocess.run(args + ['--once'], cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.stdout, 'bounded\n')
+
+
 class OwnerTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

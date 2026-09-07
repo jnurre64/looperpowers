@@ -45,19 +45,42 @@ Read-only. Offer each discovered value as the default; ask one question at a tim
 }
 ```
 
-Optional `start_blocks` maps client/mode to exact headings in loop_doc, as specified in the
-runtime contract. Preserve unknown keys and all legacy paths. Ask which runtime/mode the
-project needs; setup does not prove scheduler availability. For Codex bounded mode, propose
-a separate committed heading and verbatim one-iteration command that preserves every project
-gate. Never translate or replace an existing Claude block. Existing project policy that
-requires Claude tools needs an explicit reviewed doc migration before Codex start.
+Save the operating choice once so the normal workflow is setup → start → pause. Add
+`default_modes`, keyed by client, alongside `start_blocks` (the exact command headings):
 
-For explicitly selected supervised mode, read
-[the supervisor guide](../loop-start/references/codex-supervisor.md), propose additive
-`codex_supervisor`/`start_blocks` config and the two sections from
-`templates/CODEX-SUPERVISOR.md`. Review timer-policy compatibility before committing. Do not
-install services, change authentication or launch the loop as part of setup. Explain that
-host process management is separate and a controlled pilot is still needed.
+```json
+"default_modes": {"claude": "persistent", "codex": "supervised"}
+```
+
+This is an example after an explicit setup decision, not an automatic default for every
+project. Preserve other clients' defaults, unknown keys and all legacy paths. Discover the
+available runtime and explain the practical behavior in plain language:
+
+- Continuous event-driven loop (`persistent`): wakes on worker/CI completion, with the
+  project's fallback timer. Preserve the existing Claude behavior and policy.
+- Continuous Codex timer loop (`supervised`): runs through the configured host supervisor.
+  Use it when that host is available and the project explicitly permits timed checks.
+- One iteration only (`bounded`): runs once and stops. Offer as an optional `--once` use case;
+  save it as the default only if the user explicitly wants one-off starts.
+
+Prefer configuring a continuing loop when the user asks for "the loop." Do not present a
+list of internal mode names when discovery identifies the intended runtime. If needed, ask
+one plain-language setup question about continued operation or its hosting. Missing hosting
+is a setup blocker to explain, never a reason to silently save bounded mode. An explicitly
+chosen runtime may be saved with its prerequisite recorded as unresolved; do not claim ready
+until that prerequisite is satisfied. Setup never launches the loop.
+
+For Codex supervised operation, read
+[the supervisor guide](../loop-start/references/codex-supervisor.md) and propose additive
+`codex_supervisor`/`start_blocks` config and both rendered project blocks from
+`templates/CODEX-SUPERVISOR.md`. Review timer-policy compatibility. For an optional one-off
+command, use the bounded block in templates/LOOP.md. Never replace the existing Claude
+block or weaken any gate. Do not install services or change authentication during setup.
+
+Validate that every saved default has a corresponding project command; supervised also
+requires its pause block. Show the selected behavior and any unresolved host prerequisites
+in the setup diff. Existing projects can keep using their explicit mode flags until setup
+saves a default. Existing config without defaults still works unchanged in Claude.
 
 Existing file: never overwrite a key silently — show the diff per key and ask. Validate with
 `jq .` before committing.
@@ -85,10 +108,9 @@ looks stale; say so.
 - One commit on `default_branch`: `docs: loop setup — loop.json, STATUS.md, LOOP.md start block`.
   Push only if the tree was clean before you started and no CI run on `default_branch` is in
   progress; otherwise leave it committed and say so.
-- Print what was written and the suggestions you did not make. For Codex, print
-  `next: $loop-start --mode bounded` or `--mode supervised` for the selected mode; for Claude,
-  print `next: /loop-start` (or the explicitly configured alternative). These are chat prompts,
-  not shell commands. Supervised setup also names the separate host-service prerequisite.
+- Print what was written, the saved behavior and any unresolved prerequisites. The normal
+  hand-off is `next: $loop-start` for Codex or `next: /loop-start` for Claude. These are chat
+  prompts, not shell commands. Mention `--once` only as an optional single-iteration override.
 
 ## Rationalisations that mean you left the four-file scope
 

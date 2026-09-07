@@ -1,7 +1,8 @@
 # Codex exec supervisor
 
 This is looperpowers' timed runtime, built on the documented `codex exec` interface. It is
-not a built-in Codex loop command. Read this for explicitly selected `--mode supervised`.
+not a built-in Codex loop command. Read this when setup saved supervised operation or the user explicitly overrides to it.
+Normal commands remain `$loop-setup`, `$loop-start`, and `$loop-pause`.
 It runs on Linux/POSIX with Python 3, Git, gh and Codex CLI; it is not a Windows service.
 
 ## Choose the runtime
@@ -25,9 +26,10 @@ Native scheduled tasks require their own verified integration; they are not cont
 
 ## Project configuration
 
-Add to the existing loop.json (preserve all existing keys and start blocks):
+Setup saves this choice once in loop.json (preserve existing keys, defaults and start blocks):
 
 ```json
+"default_modes": {"claude":"persistent", "codex":"supervised"},
 "start_blocks": {
   "claude": {"persistent": "Starting the loop"},
   "codex": {

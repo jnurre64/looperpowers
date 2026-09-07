@@ -95,9 +95,9 @@ notification alone; use the verified runtime completion wait, not sleep loops.
 
 ## Starting the loop
 
-Preferred: Claude `/loop-start` or Codex `$loop-start --mode bounded`. Start always runs
+Preferred: Claude `/loop-start` or Codex `$loop-start`; setup saves the runtime choice. Start always runs
 capability and ownership preflight. The legacy block below is Claude/persistent only. Codex
-requires an explicitly selected mode and a committed `start_blocks` mapping in loop.json;
+requires a saved `default_modes` choice and committed `start_blocks` mapping in loop.json;
 never rewrite the legacy block at start time. All client blocks inherit every gate and stop
 rule in this document, including project playtest requirements.
 By hand, in the orchestrator session, after reading `{{status_file}}`:
@@ -108,13 +108,13 @@ By hand, in the orchestrator session, after reading `{{status_file}}`:
 
 In the verified Claude runtime, `/loop` without an interval is self-paced: the session schedules its own next wake-up and
 **stops itself** on a stop case. Claude pauses with `/loop-pause` and resumes with `/loop-start`.
-Codex uses `$loop-pause` and the explicitly configured `$loop-start --mode bounded` or
-`--mode supervised` command. Supervised mode requires its own committed timer policy and
+Codex uses `$loop-pause` and `$loop-start` with the saved setup choice.
+Optional `$loop-start --once` runs one iteration without changing that choice. Supervised mode requires its own committed timer policy and
 iteration/pause sections; it never executes the legacy Claude block.
 
 ## Starting the loop (Codex bounded)
 
-Select this only through `start_blocks.codex.bounded` in loop.json and explicit bounded mode.
+Select this through `start_blocks.codex.bounded` for `--once` (or an explicitly saved one-off default).
 
 ```text
 Run exactly one attended {{project}} loop iteration per {{loop_doc}} for the current phase (entry: {{status_file}} "Next ready"; gh as {{bot_user}}; repo {{repo}} on {{default_branch}}). Preserve all plan, merge and playtest gates, readiness bars, spin guard, concurrency, dependency rules and notification checks in {{loop_doc}}. Perform immediately available work only; never wait or schedule another iteration. Inspect dispatcher semantic outcomes and locks before dispatching. When only a human action remains, post once naming what is awaited and stop without polling. At the end, use loop-pause to stop owned machinery, record PRs and workers still in flight in {{status_file}}, publish status, notify with {{notify}}, and release verified ownership. State that no future wakeup is armed.
