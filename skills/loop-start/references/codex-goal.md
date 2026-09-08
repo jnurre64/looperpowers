@@ -8,7 +8,13 @@ start means a native Goal, not a timer, repeated prompts or an arbitrary iterati
 ## Inspect and prepare
 
 1. Read loop.json, LOOP.md and STATUS. Report In flight, Next ready and Awaiting human.
-   Read existing plans, acceptance evidence and failure counts; do not reset on client change.
+   Read existing plans, acceptance evidence, saved authorizations and failure counts; do not
+   reset on client change. Apply the shared contract's durable resume decisions. Reconcile
+   the ready set before acquiring ownership, notifying kickoff or creating a new Goal.
+   If every path already requires human input, advance the concrete design/retry discussion
+   in this conversation rather than create a Goal just to repeat the known blocker. Continue
+   independent authorized investigation. Do not label a running worker or engineering task
+   human-blocked without current evidence, and do not use this check to pause an active Goal.
 2. Inspect actual native Goal state in this session using the exposed inspection tool or
    `/goal`. Available tool schemas define capabilities, not a version number or enabled flag.
    Recognize none, active, paused, complete and blocked only from actual runtime evidence.

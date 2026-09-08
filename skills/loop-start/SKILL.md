@@ -24,7 +24,9 @@ from this installed skill folder, following symlinks.
 ```bash
 cat claude-work/loop.json            # missing → stop: "run /loop-setup first"
 ```
-Then read `status_file`. Both are required; nothing is inferred.
+Then read `status_file` and the project decision/handoff references it names. Both config
+and status are required. Reconcile saved authorizations and next actions under the shared
+runtime contract before asking the user to repeat an approval.
 
 Resolve the actual client's saved choice using
 `python3 <skill-dir>/scripts/preflight.py --client <client> --resolve-mode`.

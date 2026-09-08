@@ -19,6 +19,29 @@ not a durable scheduler. All runtimes preserve plan/review/current-head CI/merge
 gates, scope, notification policy and dependency-safe concurrency. Native controls never
 cancel another session's scheduling or detached workers.
 
+## Durable resume decisions
+
+Bare loop-start must be sufficient to resume the saved workflow. Keep user-granted
+notification scope in the project procedure/decision record and issue-specific approvals
+in the existing dashboard or linked issue/decision record. Include the user's source/date,
+action and destination, limits (such as one retry), and whether the grant is pending,
+consumed, superseded or revoked. Handoffs point to these records; a suggested restart prompt
+must not be the only place an approved next action exists. Do not create another ledger.
+
+On start, read those records and reconcile them against the current issue/PR/worker state.
+A previous "awaiting approval" summary does not overrule a later user decision. Use an
+existing applicable grant without asking again; changing clients or sessions does not
+consume it. Mark a one-shot grant consumed when its action is dispatched, preserving the
+failure history, so another start cannot spend it twice. A changed scope or destination
+requires reconciliation, not silent expansion. Never manufacture approval from an assistant
+proposal or infer that a generic restart clears a project spin guard.
+
+Distinguish authorization from enforcement: an approval reviewer or sandbox can still reject
+an authorized operation. Explain the actual rejection and retain the failed-step checkpoint;
+do not bypass it through another route or weaken ownership/notification requirements. If
+clarification is needed, present the concrete action and relevant existing grant together,
+not a request that the user repeat a special startup incantation.
+
 ## Clients and modes
 
 | Client/runtime | Persistent unattended | Explicit bounded iteration |

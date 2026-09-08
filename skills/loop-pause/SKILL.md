@@ -91,7 +91,8 @@ Replace, never append. Required shape:
   CI running / green), and what the **standard** iteration does with it. State facts; the
   iteration's rules in `loop_doc` are the instructions. No "on restart do X before Y" lists.
 - **Next ready:** the next issue(s) and any constraint (parallel-safe, orchestrator-written
-  plan). This is `loop-start`'s entry point.
+  plan), with the source and remaining scope of any user-approved next action. This is
+  `loop-start`'s entry point; the user must not have to repeat that approval in a new prompt.
 - **Awaiting <human>:** what a person owes, one line each, where it was posted.
 - Keep ≤ 80 lines. Commit straight to `default_branch` (`docs: STATUS — loop paused …`), push.
 
