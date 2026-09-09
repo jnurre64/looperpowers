@@ -138,14 +138,17 @@ local-only status and any pending publication. Never stage unrelated user change
 When only human work remains, stop project mutations and record the checkpoint. Mark a native
 Goal complete only if its defined outcome (possibly reaching that checkpoint) was achieved.
 Use blocked only under the exposed tool's own blocking rules; some require a repeated blocker
-across three consecutive goal turns. Never misuse complete/blocked as pause. If a genuine
-pause control is unavailable, request native `/goal pause` and report pending confirmation.
+across three consecutive goal turns. Never misuse complete/blocked as pause. If no exposed pause tool exists, try the native API helper below before asking for UI
+action. If neither route confirms pause, request `/goal pause` and report pending confirmation.
 A Goal is session continuation, not promised future wakeups or an offline service.
 
 ## Pause and transfer
 
 1. Inspect native state and actual owner; stop starting new work immediately. Use the exposed
-   native pause operation if present. Otherwise give `/goal pause`, then `/goal` to inspect.
+   native pause operation if present. If only create/get/update tools are exposed, use
+   the native API helper below; missing pause in those tools does not mean the native
+   runtime lacks it. Only if both paths are unavailable/unconfirmed give `/goal pause`,
+   then `/goal` to inspect.
    Without confirmation report **pause pending**, retain ownership, and do not claim shutdown.
    `update_goal` with complete/blocked is not pause. `drain` does not create a polling loop;
    use only an available bounded wait when explicitly requested.
@@ -175,12 +178,63 @@ hosts require a shared external coordinator or one orchestration checkout. Older
 must be updated before relying on linked-worktree exclusion. Goal IDs/state do not migrate
 between clients: the shared project resume point does.
 
+## Native API self-pause when the model has no pause tool
+
+`native_goal.py` uses the installed Codex app-server protocol, which supports
+`thread/goal/set` with `status: "paused"`. This is a native pause, not the model's
+restricted `update_goal` tool. First inspect the actual Goal and owning session,
+then use the matching recorded token/session from the orchestration checkout:
+
+```bash
+python3 <resolved-loop-start-dir>/scripts/native_goal.py inspect --session <session> --token <token>
+python3 <resolved-loop-start-dir>/scripts/native_goal.py pause --session <session> --token <token>
+```
+
+Use `--owner <path>` when needed and `--codex-bin <installed-binary>` for a non-PATH
+installation. The helper refuses a different `CODEX_THREAD_ID`, unbound/foreign owner,
+competing linked owner or objective mismatch. It serializes read/set/read with the
+shared owner lock. It omits objective and budget from the status mutation, verifies
+identity/usage preservation and reads back native state. Already-paused and terminal
+Goals require no mutation. Only `state: "paused"` confirms pause; a terminal state
+must be reported as observed. It never releases or rewrites the owner.
+
+An old owner may have been bound to a fenced objective including its final newline,
+while native Codex persisted the trimmed text. Do not weaken the helper's comparison.
+Read the actual native objective and preserve it exactly in an observation file.
+Only when the old source hashes to the bound digest and native text equals that
+source with surrounding whitespace removed, repair metadata explicitly:
+
+```bash
+python3 <resolved-loop-start-dir>/scripts/owner.py bind-goal --token <token> --session <session> --state <observed-state> --objective-file <exact-native-objective-file> --previous-objective-file <old-bound-source-file>
+```
+
+The helper rejects any semantic change or mismatching old digest. This stores a
+verified observation; it does not pause, replace or edit the native Goal.
+
+The control process is short-lived `codex app-server --stdio`, not a new agent,
+resumed thread, managed daemon or timer. It sends initialization and Goal get/set
+requests only. It uses the installed Codex home; do not point it at another home to
+manufacture a matching state, edit native databases, inject keystrokes, start a turn
+or weaken sandbox/approval controls. Normal shell permissions still apply.
+
+After success, independently inspect through the exposed native Goal tool or `/goal`
+when available. Bind the observed state with `owner.py`, reconcile workers and save
+STATUS as in the pause procedure. Pausing continuation does not terminate the current
+turn or detached workers; finish the user's checkpoint task and do not start gameplay
+work. On rejection, timeout, mismatch or ambiguous readback, retain ownership and
+inspect before any retry. If native control remains unavailable, explain the exact
+failure and give the UI command. Do not silently launch a service or retry a mutation.
+
+The helper is intentionally pause/inspect only. Resume, clear and cross-client
+transfer still use their verified native controls and existing ownership procedure.
+
 ## Sources and validation limits
 
 Native commands and continuation: [developer commands](https://learn.chatgpt.com/docs/developer-commands?surface=cli),
 [Follow goals](https://learn.chatgpt.com/use-cases/follow-goals),
 [long-running work](https://learn.chatgpt.com/docs/long-running-work).
-The adapter is skill instructions plus deterministic metadata/preflight helpers, not a Python
-Goal SDK. Offline tests validate decisions and exclusion; live tool availability, model
+The adapter is skill instructions plus deterministic metadata/preflight helpers, not a general Python
+Goal SDK. The narrow helper performs native inspection/pause; offline tests validate
+its status-only mutation, ownership, readback and failure handling. Live tool availability, model
 compliance and lifecycle behavior need a controlled pilot. Never create a live Goal as a test
 without the user's request to run that Goal.

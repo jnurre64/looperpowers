@@ -60,8 +60,10 @@ completion with its existing fallback. The optional Codex supervisor uses a host
 `--once` stops after one iteration. All preserve the same project gates and stop rules.
 
 When switching clients, pause the previous owner and verify transfer first. A paused native
-Goal retains ownership until it cannot resume writes. Some Codex surfaces require an explicit
-`/goal pause` or `/goal resume`; the skill reports pending until native state confirms it.
+Goal retains ownership until it cannot resume writes. When a Codex surface lacks a pause tool, the skill uses the native API pause helper
+with ownership and readback checks. If that route is unavailable, it requests
+`/goal pause`; resume may require `/goal resume`. UI handoffs remain pending until
+native state confirms them.
 Existing saved timer/bounded defaults remain unchanged until a reviewed setup migration.
 
 See the [Codex guide](docs/CODEX.md) for setup/migration and runtime details, the
