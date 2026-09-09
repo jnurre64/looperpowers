@@ -37,7 +37,10 @@ It preserves dirty/staged files, unpublished commits and the current branch. Pub
 follows project policy and user authorization; local-only status is disclosed.
 
 Some Codex environments expose creation/inspection tools but no native pause/resume tool.
-The skill then gives the exact `/goal pause` or `/goal resume` command and reports pending
+For pause, the skill first uses its ownership-checked native API helper and verifies
+readback; it does not require a model-facing pause tool. If the installed API is
+unavailable or unconfirmed, it gives `/goal pause`. Resume still uses an exposed
+control or `/goal resume`. A UI handoff reports pending
 until native state confirms the transition. If only command UI is available for creation,
 it supplies `/goal <project objective>`. It never claims a Goal started just from preparing
 a command, or treats complete/blocked as a substitute for pause.
@@ -110,3 +113,23 @@ Offline tests exercise routing, ownership and supervisor processes with local fa
 not establish real native lifecycle behavior or model adherence to project gates; those need
 a controlled pilot. The orchestrator backend is independent of the worker engine: the current
 sandbox-pal shell dispatcher still launches Claude workers.
+
+## Native self-pause validation (September 9, 2026)
+
+Codex CLI0.153.4 exposes native `thread/goal/get` and status-only
+`thread/goal/set` even when the model tool surface has no pause operation. The
+control-only stdio helper read an existing owned Goal, verified its identity and
+confirmed an idempotent paused-state request against the real native API. An
+independent model-facing Goal read also reported paused. No live Goal was created,
+resumed or turned active for this check; active→paused behavior is covered by the
+fake-peer and actual-stdio regression tests, not claimed as a live transition.
+
+The live check caught a legacy owner binding made from a trailing-newline source
+while native Codex stored trimmed text. Explicit hash-checked whitespace repair
+fixed the metadata without replacing the Goal, changing usage/budget or releasing
+ownership. Bare-start routing now compares the native-normalized objective.
+
+All61offline lifecycle/owner/supervisor/native tests pass; both modified skills
+pass structural validation. Installed symlinks use this same source. These checks
+do not certify all Codex versions or stop foreign workers. On an unsupported or
+unconfirmed native API, retain ownership and use the documented UI handoff.

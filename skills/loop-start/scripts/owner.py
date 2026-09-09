@@ -70,7 +70,7 @@ def release(path, token=None, digest=None):
         path.unlink()
 
 
-def bind_goal(path, token, objective, state, session):
+def bind_goal(path, token, objective, state, session, previous_objective=None):
     """Persist observed native state, never perform or certify a native operation."""
     if state not in ('active', 'paused', 'complete', 'blocked'):
         raise ValueError('unknown native state')
@@ -84,7 +84,15 @@ def bind_goal(path, token, objective, state, session):
             raise ValueError('owner session mismatch')
         digest = hashlib.sha256(objective.encode()).hexdigest()
         if record.get('goal', {}).get('objective_sha256', digest) != digest:
-            raise ValueError('goal objective changed; reconcile before rebinding')
+            # Explicit repair of an old binding made from a fenced source instead of
+            # the exact native response. Never permit a semantic objective change.
+            previous_digest = (hashlib.sha256(previous_objective.encode()).hexdigest()
+                               if previous_objective is not None else None)
+            if (not isinstance(previous_objective, str)
+                    or previous_digest != record.get('goal', {}).get('objective_sha256')
+                    or previous_objective.strip() != objective
+                    or objective != objective.strip()):
+                raise ValueError('goal objective changed; reconcile before rebinding')
         record['goal'] = dict(objective_sha256=digest, state=state,
                               observed_at=datetime.now(timezone.utc).isoformat())
         temporary = None
@@ -115,6 +123,8 @@ def main():
     bind.add_argument('--objective-file', type=Path, required=True)
     bind.add_argument('--state', choices=['active', 'paused', 'complete', 'blocked'], required=True)
     bind.add_argument('--session', required=True)
+    bind.add_argument('--previous-objective-file', type=Path,
+                      help='explicit whitespace-only repair; old file must match bound hash')
     drop = sub.add_parser('release')
     drop.add_argument('--token', required=True)
     recover = sub.add_parser('recover', help='only after authorized, verified shutdown')
@@ -125,7 +135,9 @@ def main():
             print(json.dumps(acquire(args.path, args.client, args.mode, args.session, args.runtime)))
         elif args.operation == 'bind-goal':
             print(json.dumps(bind_goal(args.path, args.token, args.objective_file.read_text(),
-                                       args.state, args.session)))
+                                       args.state, args.session,
+                                       args.previous_objective_file.read_text()
+                                       if args.previous_objective_file else None)))
         else:
             release(args.path, token=getattr(args, 'token', None),
                     digest=getattr(args, 'sha256', None))

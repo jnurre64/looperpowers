@@ -22,6 +22,9 @@ def decide(objective, observation, owner=None):
     controls = observation.get('controls', [])
     if not isinstance(controls, list):
         raise ValueError('controls must list actually available native operations')
+    # Codex persists the trimmed objective; fenced source extraction keeps its newline.
+    source_objective = objective
+    objective = objective.strip()
     digest = hashlib.sha256(objective.encode()).hexdigest()
     if owner:
         if (owner.get('runtime') != 'codex-goal' or not owner.get('token')
@@ -40,7 +43,7 @@ def decide(objective, observation, owner=None):
               'complete': 'checkpoint', 'blocked': 'reconcile'}[state]
     if action in ('create', 'resume') and action not in controls:
         if observation.get('command_ui') is True:
-            command = '/goal ' + objective if action == 'create' else '/goal resume'
+            command = '/goal ' + source_objective if action == 'create' else '/goal resume'
             return dict(action='handoff', command=command, started=False)
         raise ValueError('native control unavailable; no timer or bounded fallback')
     return dict(action=action, objective_sha256=digest, started=False)

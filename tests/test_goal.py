@@ -21,11 +21,21 @@ class GoalDecisions(unittest.TestCase):
 
     def observation(self, state='none', **extra):
         return dict(state=state, session='s1', controls=['create', 'resume'],
-                    reconciled=True, objective=self.objective, **extra)
+                    reconciled=True, objective=self.objective.strip(), **extra)
 
     def record(self):
         return dict(runtime='codex-goal', token='t1', session='s1', goal={
-            'objective_sha256': hashlib.sha256(self.objective.encode()).hexdigest()})
+            'objective_sha256': hashlib.sha256(self.objective.strip().encode()).hexdigest()})
+
+    def test_fenced_newline_matches_exact_native_binding_without_reopening_goal(self):
+        result = goal.decide(self.objective, self.observation('paused'), self.record())
+        self.assertEqual(result['action'], 'resume')
+        self.assertEqual(result['objective_sha256'],
+                         hashlib.sha256(self.objective.strip().encode()).hexdigest())
+        wrong = self.observation('paused')
+        wrong['objective'] += ' different work'
+        with self.assertRaises(ValueError):
+            goal.decide(self.objective, wrong, self.record())
 
     def test_new_and_repeated_start(self):
         self.assertEqual(goal.decide(self.objective, self.observation())['action'], 'create')
@@ -116,6 +126,22 @@ class GoalWorkspace(unittest.TestCase):
             with self.assertRaises(ValueError):
                 owner.bind_goal(self.path, record['token'], objective, state, session)
         self.assertEqual(json.loads(self.path.read_text())['goal']['state'], 'paused')
+
+    def test_explicit_native_whitespace_binding_repair_preserves_semantics(self):
+        record = owner.acquire(self.path, 'codex', 'goal', 's1', 'codex-goal')
+        owner.bind_goal(self.path, record['token'], 'outcome\n', 'paused', 's1')
+        before = self.path.read_bytes()
+        for new, old in [('different', 'outcome\n'), ('outcome', 'wrong source'),
+                         ('outcome', None), (' outcome ', 'outcome\n')]:
+            with self.assertRaises(ValueError):
+                owner.bind_goal(self.path, record['token'], new, 'paused', 's1', old)
+            self.assertEqual(self.path.read_bytes(), before)
+        bound = owner.bind_goal(self.path, record['token'], 'outcome', 'paused', 's1',
+                                'outcome\n')
+        self.assertEqual(bound['goal']['objective_sha256'],
+                         hashlib.sha256(b'outcome').hexdigest())
+        self.assertEqual(bound['token'], record['token'])
+        self.assertEqual(bound['session'], 's1')
 
     def test_terminal_handoff_requires_clear_then_new_owner(self):
         old = owner.acquire(self.path, 'codex', 'goal', 's1', 'codex-goal')
