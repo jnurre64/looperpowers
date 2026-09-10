@@ -52,6 +52,23 @@ because this skill was installed.
 
 ## 2. Preflight — every line is a hard stop with its fix
 
+**Run the readiness script FIRST** — it is the one definition of "ready to loop-start":
+
+```bash
+python3 <skill-dir>/scripts/readiness.py --client <client>
+```
+
+It runs every check in the table below in order (owner file included) and prints one
+`PASS loop-preflight <sha> <utc>` line or the first failing check with its fix. A failure
+is reported to the user as that check plus its fix, and — when the STATUS header claimed
+"ready" — as **"the handoff overstated readiness"**: a ready claim with no PASS line beside
+it was never verified. An owner record left by a runtime the project docs say is closed is a
+stale RECORD: release it once the user confirms that runtime is finished with THIS project
+(`owner.py release --token …`). Never ask the user to shut the other client down — it may
+legitimately run another project side by side; owner files are per project. The table
+remains the specification of what the script checks; it is not a checklist to tick by hand.
+
+
 | check | command | on failure |
 |---|---|---|
 | On `default_branch` | `git branch --show-current` | stop: "checkout `<branch>`" |
@@ -99,5 +116,7 @@ iteration acts on it.
 |---|---|
 | "the untracked file is just a note, nothing actionable" | It is a dirty tree. Clean it or stop. |
 | "the owner file is probably stale, the timestamps prove it" | `--force` still requires verified shutdown of the old runtime. Say what the file says and stop. |
+| "the handoff says ready, so the preflight is a formality" | The 2026-09-09 restart: a "ready" written from a checklist, with a paused record from a closed runtime on the owner file. Ready = `readiness.py` printed PASS. Nothing else. |
+| "the other client holds the owner, so the user must shut it down" | Owner files are per project; the other client may run another project side by side. A record from a runtime that is closed for THIS project is released with the user's confirmation, not by stopping that client. |
 | "I'll tweak the /loop text slightly for today" | The block is verbatim. Change the doc, commit, then start. |
 | "notify is down but the loop can run" | Stops that cannot post are the known failure. Fix notify first. |

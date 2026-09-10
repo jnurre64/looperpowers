@@ -172,6 +172,11 @@ A Goal is session continuation, not promised future wakeups or an offline servic
    If only UI can clear, provide `/goal clear` after that transfer is authorized and verify.
    Terminal goals may release after confirmed quiescence, saved status and successful required
    notification. Old callbacks must always validate their token before mutation.
+   **A Goal that is CLOSED for this project — the user decides the work moves to another
+   client, or the Goal is complete/blocked and will not be resumed — must NOT stay `paused`
+   on the owner file:** after saved status and notification, release its record
+   (`owner.py release --token …`) so the other client's `readiness.py` passes. A `paused`
+   record from a closed Goal blocked the Webber restart on 2026-09-09.
 
 Linked worktrees share acquisition exclusion through the owner helper; separate clones or
 hosts require a shared external coordinator or one orchestration checkout. Older installations

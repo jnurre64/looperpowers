@@ -98,6 +98,17 @@ Replace, never append. Required shape:
 - **Awaiting <human>:** what a person owes, one line each, where it was posted.
 - Keep ≤ 80 lines. Commit straight to `default_branch` (`docs: STATUS — loop paused …`), push.
 
+**Readiness is a script result, not a checklist.** After the STATUS commit is pushed, run
+`python3 <resolved-loop-start-dir>/scripts/readiness.py --client <client> --session <your session>`
+(your own owner record is still held, so pass your session). If it prints
+`PASS loop-preflight <sha> <utc>`, put that line in the header next to the STOPPED clause in
+one more `docs: STATUS — preflight PASS` commit and push. If it fails, the header states the
+failing check and its fix and does NOT say "ready"; a later `loop-start` reports the failure
+as "the handoff overstated readiness" if it finds a ready claim without a PASS line. Never
+write "ready to restart" from a hand-written list — the 2026-09-09 restart stalled on exactly
+that: a checklist that never looked at the owner file while a paused record from a closed
+runtime sat on it.
+
 ## 5. Release and announce
 
 1. Post through `notify`: `⏸️ <project> loop paused · <progress> · <in flight> · next: <issue>`.
@@ -121,3 +132,5 @@ Replace, never append. Required shape:
 | "stash the docs change and note it" | Commit it. A stash is lost to the next session. |
 | "the owner file's semantics are unclear, leave it" | Release only after verified shutdown, published STATUS and notification; retain it on uncertainty. |
 | "put the restart steps in STATUS so nothing is missed" | STATUS is a dashboard; `loop-start` + `loop_doc` are the steps. |
+| "the checklist is ticked, so the header can say ready" | Ready is `readiness.py` printing PASS after the STATUS push. A ticked list proved nothing on 2026-09-09. |
+| "the runtime is closed in the docs, the owner file can stay" | Closing a runtime for a project releases its owner record. A `paused` record from a closed runtime is the next start's blocker. |

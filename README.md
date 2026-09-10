@@ -37,6 +37,8 @@ Open Codex in the **project you want to orchestrate** and run `$loop-setup`. It 
 existing settings and saves the shared workflow and client commands. Native Goal continues a
 scoped outcome in the Codex session; ordinary setup needs no host service or iteration cap.
 
+Readiness is a script result: `skills/loop-start/scripts/readiness.py` prints `PASS loop-preflight …` or the first failing check; a STATUS "ready" claim is valid only next to that line.
+
 Once setup is ready, use `$loop-start`. Use
 `$loop-pause` when you want to stop, and `$loop-start` again to resume. Claude uses the same
 three names with `/` instead of `$`.

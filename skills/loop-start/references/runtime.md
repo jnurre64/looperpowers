@@ -182,6 +182,19 @@ report the failed step locally, and retry that step on recovery before release. 
 notify retains the historical user-only behavior; an explicitly configured failing notify
 never silently falls back to local output.
 
+## Readiness is a script result
+
+`scripts/readiness.py` is the ONE definition of "ready to loop-start" for every client: it runs
+the hard-stop checks (branch, clean tree, up to date, identity, notify, start block, STATUS
+header, owner file) and prints `PASS loop-preflight <sha> <utc>` or the first failure with its
+fix. `loop-start` runs it before ownership or notification; `loop-pause` runs it after the
+STATUS push and records the PASS line in the header. A STATUS header may claim "ready" only
+next to a PASS line; a ready claim without one is reported by the next start as "the handoff
+overstated readiness". Closing a runtime for a project releases its owner record — a `paused`
+record left behind by a runtime the docs call closed is a stale record, released with the
+user's confirmation, never grounds to shut that client down (owner files are per project;
+another client may run another project side by side).
+
 ## Reconciliation and legacy PAUSED
 
 Neither STOPPED nor PAUSED proves quiescence. Inspect scheduler state, open PRs and current
