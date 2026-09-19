@@ -170,15 +170,22 @@ scheduler reconciliation and before settling/publishing; losing acquisition stop
 This prevents a concurrent start from racing dashboard cleanup. Release the recovery token
 only after normal pause publication and notification succeed.
 
-Interrupted acquisition, shutdown, or status publication: leave the record as a blocker until
-recovery establishes quiescence. Never auto-expire ownership.
+Interrupted acquisition, shutdown, or required checkpoint persistence: leave the record as a
+blocker until recovery establishes quiescence and saves the resume point. Never auto-expire
+ownership. Do not conflate that required lifecycle state with optional post-terminal
+bookkeeping: after the objective's outcome is achieved, a cleanup/docs PR or publication not
+required by the objective is recorded separately and cannot downgrade the Goal or retain its
+owner by itself.
 
 Start order: all preflight and reconciliation → atomic acquire → kickoff notify → invoke
 verbatim command. Notify failure: no dispatch/scheduling; verify no tasks exist, release only
 this token, report failure locally. If invocation partially fails, stop/inspect first; retain
-the owner on uncertainty. Pause order: stop/inspect → settle → publish STATUS → pause notify
-→ token-checked release. If status commit/push or pause notification fails, retain ownership,
-report the failed step locally, and retry that step on recovery before release. An unset
+the owner on uncertainty. Pause order: stop/inspect → settle → save/publish STATUS as required
+by the selected project contract → pause notify → token-checked release. If required checkpoint
+persistence or pause notification fails, retain ownership, report the failed step locally, and
+retry that step on recovery before release. A later publication that was not part of the
+defined outcome or selected lifecycle contract is bookkeeping, not a reason to relabel an
+achieved Goal blocked or retain ownership. An unset
 notify retains the historical user-only behavior; an explicitly configured failing notify
 never silently falls back to local output.
 

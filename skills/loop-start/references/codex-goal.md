@@ -98,6 +98,14 @@ Before marking the whole Goal blocked, distinguish three cases:
 - **Whole Goal blocked:** every remaining in-scope path requires an actual human
   decision or external-state change, supported by current evidence.
 
+First compare current evidence to the objective's exact terminal condition. An achieved
+outcome is monotonic: later cleanup, dashboard, handoff or documentation work that the
+objective did not require is separate bookkeeping and cannot turn success into `blocked`.
+Say the achieved user-facing result first (for example, that a build is available), then
+report bookkeeping separately. Do not retain ownership solely for that optional follow-up.
+Conversely, never classify a missing product gate, required publication, delivery, or other
+explicit terminal requirement as bookkeeping.
+
 Use the existing dashboard for a short stop record, not another tracking system:
 exact requirement; source of the user ruling/constraint; new evidence; and each
 remaining issue's next safe action or concrete blocker. Resolve questions from the
@@ -120,6 +128,24 @@ These instructions cannot intercept native status tools or guarantee model compl
 The regression scenarios exercise intended decisions; passing helper unit tests is
 not evidence that an agent will make those decisions correctly.
 
+Before calling a native terminal control, write a fresh observation outside the checkout
+and run `python3 <skill-dir>/scripts/terminal.py --observation <file>`. Name every required
+piece of evidence and whether it was verified; classify each pending item by whether the
+objective requires it; record runtime quiescence, checkpoint persistence, required
+notification and whether this terminal transition closes the Goal for the project. The helper rejects completion with missing evidence, `blocked` after an
+achieved outcome, and `blocked` without both a genuine impasse and the native threshold.
+Its `release_owner` result covers lifecycle readiness only; it neither proves supplied
+evidence nor mutates the Goal, sends notifications, publishes files or releases ownership.
+
+```json
+{"defined_outcome_reached":true,
+ "required_evidence":[{"name":"named terminal gate","verified":true}],
+ "pending":[{"name":"docs follow-up","required_by_objective":false}],
+ "runtime_quiescent":true,"checkpoint_saved":true,
+ "notification_succeeded":true,"closed_for_project":true,
+ "proposed_goal_status":"complete"}
+```
+
 ## Shared work and checkpoints
 
 Follow the project's standard iteration and gates repeatedly toward the selected outcome.
@@ -134,6 +160,12 @@ Include runtime (`codex-goal`), actual native state, owner session, branch/unpub
 acceptance evidence, exact human ask and where it was posted. Keep status concise; do not
 include tokens. Publish only as authorized by project/user policy; otherwise clearly record
 local-only status and any pending publication. Never stage unrelated user changes.
+
+Separate outcome state from follow-up state. If the defined terminal checkpoint is proven,
+mark the Goal complete even when non-required bookkeeping remains, record that bookkeeping
+without presenting it as the reason work stopped, and follow the verified terminal release
+path. A required lifecycle failure such as an unsaved checkpoint or failed configured
+notification may retain ownership, but it does not downgrade an achieved Goal to blocked.
 
 When only human work remains, stop project mutations and record the checkpoint. Mark a native
 Goal complete only if its defined outcome (possibly reaching that checkpoint) was achieved.
@@ -162,7 +194,9 @@ A Goal is session continuation, not promised future wakeups or an offline servic
    exact objective. If a linked-worktree owner wins, stop; never publish concurrently. A
    foreign/unrelated native Goal is not adopted or paused by this project skill.
    Save the shared resume point as above, preserving staged/dirty/unpublished work. Do not
-   require main or a push merely to pause. Bind the actual observed native state. Notify via
+   require main, a merge, or a push merely to close an achieved Goal unless its objective or
+   project policy explicitly made that publication part of the terminal condition. Bind the
+   actual observed native state. Notify via
    the configured, authorized channel; delivery/persistence failure retains ownership and is
    reported locally. Never publish STOPPED while shutdown remains unknown.
 4. A paused Goal **retains ownership** because native `/goal resume` can revive it. Bare
@@ -171,7 +205,8 @@ A Goal is session continuation, not promised future wakeups or an offline servic
    quiescent, reconcile workers and status, then token-checked release and fresh acquisition.
    If only UI can clear, provide `/goal clear` after that transfer is authorized and verify.
    Terminal goals may release after confirmed quiescence, saved status and successful required
-   notification. Old callbacks must always validate their token before mutation.
+   notification. Non-required post-terminal bookkeeping never retains ownership by itself.
+   Old callbacks must always validate their token before mutation.
    **A Goal that is CLOSED for this project — the user decides the work moves to another
    client, or the Goal is complete/blocked and will not be resumed — must NOT stay `paused`
    on the owner file:** after saved status and notification, release its record
