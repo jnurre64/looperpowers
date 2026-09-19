@@ -63,6 +63,11 @@ or one orchestration checkout. Update both clients before relying on this protec
 
 Goal is not an offline service or a guarantee of future scheduled wakeups. When only human
 work remains, record the exact ask and use supported native checkpoint/stop controls.
+When the objective's named checkpoint is already proven, complete is monotonic: pending
+cleanup or documentation that the objective did not require is reported separately and does
+not turn the Goal into blocked or retain ownership. Required product/publication gates still
+remain requirements. The Goal guide's `terminal.py` helper validates this classification from
+fresh named evidence before a terminal transition.
 `$loop-start --once` requires its own project block and keeps the saved default unchanged.
 `$loop-pause drain` uses a supported bounded wait only; the supervisor does not support drain.
 
